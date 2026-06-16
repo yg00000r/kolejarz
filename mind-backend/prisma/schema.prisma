@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Tenant {
+  id                      Int          @id @default(autoincrement())
+  portalUsername          String       @unique
+  portalPasswordEncrypted String
+  createdAt               DateTime     @default(now())
+  shifts                  Shift[]
+  sessions                AppSession[]
+}
+
+model AppSession {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @default(cuid())
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Device {
+  id        Int      @id @default(autoincrement())
+  name      String
+  host      String
+  createdAt DateTime @default(now())
+}
+
+model Shift {
+  id             Int      @id @default(autoincrement())
+  date           String   @unique
+  shiftCode      String
+  startTime      String?
+  endTime        String?
+  type           String   @default("presence") // presence | offday
+  allocationId   String?
+  planningLevel  String?                       // Plan | Wykonanie
+  timecardStatus String?                       // Zatwierdzona | Wydana | implicit-confirmation-needed | ...
+  tenantId       Int?
+  tenant         Tenant?  @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model RouteDefinition {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String?
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+  controls    RouteControl[]
+}
+
+model RouteControl {
+  id                Int             @id @default(autoincrement())
+  routeDefinitionId Int
+  acquiredAt        String
+  lastDrivenAt      String?
+  paperSubmittedAt  String?
+  digitalCopyUri    String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @default(now()) @updatedAt
+  routeDefinition   RouteDefinition @relation(fields: [routeDefinitionId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,7 @@
+{
+  "nativeVersion": "1.0.0",
+  "nativeBuildNumber": 1,
+  "ipaUrl": "http://57.128.225.171:3000/app-releases/Kolejarz-1.0.0.ipa",
+  "releaseNotes": "Pierwsza wersja sideload (AltStore).",
+  "mandatory": false
+}

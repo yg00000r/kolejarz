@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+
+# Compiled output — nie commitować
+dist/
+
+# Baza danych SQLite
+dev.db
+dev.db-journal
+
+# Prisma generated client
+/src/generated/prisma

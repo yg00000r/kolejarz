@@ -1,0 +1,8 @@
+node_modules
+src
+prisma
+prisma.config.ts
+tsconfig.json
+dev.db
+mind-notes
+.env

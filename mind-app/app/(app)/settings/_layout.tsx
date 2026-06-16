@@ -1,0 +1,21 @@
+import { Stack } from 'expo-router';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { Colors } from '../../../constants/theme';
+
+export default function SettingsLayout() {
+  const { isDark } = useTheme();
+  const colors = isDark ? Colors.dark : Colors.light;
+
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+        headerTitleStyle: { fontWeight: '600' },
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: 'Ustawienia' }} />
+      <Stack.Screen name="diagnostics" options={{ title: 'Diagnostyka' }} />
+    </Stack>
+  );
+}

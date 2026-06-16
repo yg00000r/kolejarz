@@ -1,0 +1,12 @@
+services:
+  kolejarz-backend:
+    build: ..
+    image: kolejarz:latest
+    container_name: kolejarz
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - ../dev.db:/app/dev.db
+      - ../app-releases:/app/app-releases

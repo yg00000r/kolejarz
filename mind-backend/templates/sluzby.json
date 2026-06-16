@@ -1,0 +1,16 @@
+{
+  "S": { "opis": "Szkolenie", "skrot": "SZK", "typ": "inne" },
+  "VO": { "opis": "Badania okresowe", "skrot": "VO", "typ": "inne" },
+  "ES": { "opis": "Egzamin", "skrot": "EGZ", "typ": "inne" },
+  "WZ": { "opis": "Wolne na żądanie", "skrot": "WZ", "typ": "wolne" },
+  "DW5": { "opis": "Wolne (DW5)", "skrot": "DW5", "typ": "wolne" },
+  "DWS": { "opis": "Wolne (DWS)", "skrot": "DWS", "typ": "wolne" },
+  "DWŚ": { "opis": "Wolne (DWŚ)", "skrot": "DWŚ", "typ": "wolne" },
+  "DW": { "opis": "Dzień wolny", "skrot": "DW", "typ": "wolne" },
+  "W": { "opis": "Wolne", "skrot": "W", "typ": "wolne" },
+  "WOP": { "opis": "Wolne bezpłatne (opieka)", "skrot": "WOP", "typ": "wolne" },
+  "USWD": { "opis": "Siła wyższa", "skrot": "SWY", "typ": "wolne" },
+  "C5": { "opis": "L4 — zwolnienie lekarskie", "skrot": "L4", "typ": "l4" },
+  "C": { "opis": "L4 — zwolnienie lekarskie", "skrot": "L4", "typ": "l4" }
+}
+
