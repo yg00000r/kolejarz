@@ -36,8 +36,7 @@ mind-backend/dev.db-journal
 _archive/
 scraper/recon_output/
 expolog.txt
-"2026 Dodatek A (2026-03-12)_zmiana_nr_09.xlsx"
-"2026 Dodatek B (2026-02-19) zmiana nr 07.xlsx"
+*.xlsx
 
 # OS
 .DS_Store

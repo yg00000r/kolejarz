@@ -7,10 +7,9 @@ import { PressScale } from '../../components/PressScale';
 import { Screen } from '../../components/Screen';
 import { ScreenHeaderIconButton } from '../../components/ScreenHeader';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
-import { iosContinuousCurve, radius, touchTargetMin } from '../../constants/layout';
-import { Colors } from '../../constants/theme';
+import { iosContinuousCurve, radius } from '../../constants/layout';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useColors } from '../../contexts/ThemeContext';
 import { useAppLayout } from '../../hooks/useAppLayout';
 
 const MODULES = [
@@ -31,21 +30,29 @@ function getDateString() {
   return `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`;
 }
 
+function getTimeString() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
 export default function Dashboard() {
-  const { isDark } = useTheme();
   const { logout } = useAuth();
   const router = useRouter();
-  const colors = isDark ? Colors.dark : Colors.light;
-  const { tileWidth, tileGap, titleSize, sectionLabelSize, headerPaddingTop, headerIconSize, isLargePhone } =
+  const colors = useColors();
+  const { titleSize, sectionLabelSize, headerPaddingTop, headerIconSize, isLargePhone } =
     useAppLayout();
 
   const tileRadius = isLargePhone ? radius.lg : radius.md;
-  const tileHeight = tileWidth * 0.8;
 
   const [isLoading, setIsLoading] = useState(true);
+  const [time, setTime] = useState(getTimeString());
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const clock = setInterval(() => setTime(getTimeString()), 1000);
+    return () => {
+      clearTimeout(t);
+      clearInterval(clock);
+    };
   }, []);
 
   const handleModulePress = (id: ModuleId) => {
@@ -65,7 +72,13 @@ export default function Dashboard() {
     <Screen scroll centerContent backgroundColor={colors.background}>
       <View style={[styles.header, { paddingTop: headerPaddingTop }]}>
         <View>
-          <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Kolejarz</Text>
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { color: colors.text, fontSize: titleSize }]}>Kolejarz</Text>
+            <View style={[styles.clockPill, { backgroundColor: colors.surface }]}>
+              <MaterialCommunityIcons name="clock-outline" size={13} color={colors.accent} />
+              <Text style={[styles.clockText, { color: colors.text }]}>{time}</Text>
+            </View>
+          </View>
           <Text style={[styles.date, { color: colors.textSecondary }]}>{getDateString()}</Text>
         </View>
         <View style={styles.headerRight}>
@@ -84,31 +97,44 @@ export default function Dashboard() {
       <Text style={[styles.sectionLabel, { color: colors.textSecondary, fontSize: sectionLabelSize }]}>
         Moduły
       </Text>
-      <View style={[styles.grid, { gap: tileGap }]}>
-        {isLoading
-          ? Array.from({ length: 2 }).map((_, i) => (
-              <SkeletonLoader key={i} width={tileWidth} height={tileHeight} borderRadius={tileRadius} />
-            ))
-          : MODULES.map((mod, i) => (
-              <FadeSlideIn key={mod.id} delay={i * 65} style={{ width: tileWidth }}>
-                <PressScale
-                  style={[
-                    styles.tile,
-                    Platform.OS === 'ios' && iosContinuousCurve,
-                    {
-                      backgroundColor: colors.surface,
-                      borderRadius: tileRadius,
-                      height: tileHeight,
-                    },
-                  ]}
-                  onPress={() => handleModulePress(mod.id)}
-                >
-                  <MaterialCommunityIcons name={mod.icon as 'briefcase-outline'} size={isLargePhone ? 30 : 28} color={colors.accent} />
-                  <Text style={[styles.tileLabel, { color: colors.text }]}>{mod.label}</Text>
-                </PressScale>
-              </FadeSlideIn>
-            ))}
-      </View>
+      {isLoading ? (
+        <View style={styles.moduleStack}>
+          <SkeletonLoader width="100%" height={76} borderRadius={tileRadius} />
+          <SkeletonLoader width={56} height={56} borderRadius={28} />
+        </View>
+      ) : (
+        <View style={styles.moduleStack}>
+          <FadeSlideIn style={{ width: '100%' }}>
+            <PressScale
+              style={[
+                styles.pracaCard,
+                Platform.OS === 'ios' && iosContinuousCurve,
+                { backgroundColor: colors.surface, borderRadius: tileRadius },
+              ]}
+              onPress={() => handleModulePress('work')}
+            >
+              <View style={[styles.pracaIcon, { backgroundColor: colors.accent + '18' }]}>
+                <MaterialCommunityIcons name="briefcase-outline" size={24} color={colors.accent} />
+              </View>
+              <View style={styles.pracaText}>
+                <Text style={[styles.pracaLabel, { color: colors.text }]}>Praca</Text>
+                <Text style={[styles.pracaDesc, { color: colors.textSecondary }]}>Grafik, pociągi, załoga</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textSecondary} />
+            </PressScale>
+          </FadeSlideIn>
+
+          <FadeSlideIn delay={65}>
+            <PressScale
+              accessibilityLabel="Monitorowanie"
+              style={[styles.monitorCircle, { backgroundColor: colors.surface }]}
+              onPress={() => handleModulePress('monitoring')}
+            >
+              <MaterialCommunityIcons name="server-outline" size={22} color={colors.textSecondary} />
+            </PressScale>
+          </FadeSlideIn>
+        </View>
+      )}
     </Screen>
   );
 }
@@ -122,7 +148,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { fontWeight: '700', letterSpacing: 2 },
+  clockPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  clockText: { fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
   date: { fontSize: 14, marginTop: 3 },
   sectionLabel: {
     fontWeight: '600',
@@ -131,16 +167,35 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '100%',
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 32,
+  moduleStack: {
     width: '100%',
+    gap: 12,
+    alignItems: 'flex-start',
+    marginBottom: 32,
   },
-  tile: {
-    padding: 16,
-    justifyContent: 'space-between',
-    minHeight: touchTargetMin * 1.5,
+  pracaCard: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  tileLabel: { fontSize: 15, fontWeight: '500' },
+  pracaIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pracaText: { flex: 1, gap: 2 },
+  pracaLabel: { fontSize: 17, fontWeight: '600' },
+  pracaDesc: { fontSize: 13 },
+  monitorCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

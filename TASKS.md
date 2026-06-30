@@ -29,6 +29,47 @@
 
 ---
 
+## Na dzisiaj (2026-06-20)
+
+### 1. Panel załogi (Crew on Trip) ✅
+- [x] `scraper/recon_crew.py` — endpoint to `_-crew-on-trip-table?beginDate=...&tripNumber=...&sync=true` (GET, NIE blokowany przez Akamai; param daty = `beginDate` nie `date`). Struktura w `PORTAL_DISCOVERY.md` §9
+- [x] Backend: `fetchCrewOnTrip` + `parseCrewOnTrip` w `portal.ts`, typy `CrewMember[]` / `CrewOnTrip` (rola, imię, telefon, odcinek). Zwalidowane na realnym HTML
+- [x] Backend: endpoint `GET /crew?date=YYYY-MM-DD&trip=XXXX` w `index.ts`
+- [x] Frontend: ekran `work/crew.tsx` (stepper daty + numer, lista załogi z rolami/odcinkami/telefonami), kafelek w `work/index.tsx`, `fetchCrewOnTrip` w `services/work.ts`, trasa w `work/_layout.tsx`
+
+### 2. Powiadomienia (bez płatnego Apple Developer)
+- [x] `aps-environment` usunięte z `ios/Kolejarz/Kolejarz.entitlements` (puste `<dict/>`)
+- [x] `expo-notifications` poza `plugins` w `app.json` → prebuild nie dodaje entitlementu push (lokalne działają bez niego)
+- [x] `services/notifications.ts` — lokalne: `scheduleTimecardReminder`, `scheduleShiftAlarm`, `configureNotifications` (kanał „Asystent", handler foreground); wpięte w `app/_layout.tsx`
+- [x] FCM zbadane → **niemożliwe na iOS bez płatnego Apple Developer**: iOS push zawsze przez APNs (gated za $99/rok), FCM to nakładka na APNs. Jedyny darmowy push na iOS = Web Push/PWA (nie dotyczy apki natywnej). Decyzja: na iOS lokalne; FCM ew. później dla Androida.
+- [x] Ekran ustawień powiadomień w `settings/index.tsx` (toggle: alarm przed służbą + wyprzedzenie 30/60/120 min, przypomnienie o karcie), hook `useNotificationSetup` (AsyncStorage + reschedule z grafiku), kanał „Asystent"
+
+### 3. Zmiany UI (Personal Team)
+> ℹ️ `react-native-reanimated`, `expo-linear-gradient`, `lottie-react-native` NIE są zainstalowane. Animacje robione na core `Animated` (jak `FadeSlideIn`/`PressScale`), bez nowych zależności natywnych → OTA-friendly. Zadania zależne od reanimated/lottie wymagają decyzji o instalacji (= nowy build natywny).
+- [x] `components/Skeleton.tsx` z shimmer (core `Animated` — ruchomy pasek, bez gradientu) → `Skeleton`, `SkeletonRow`, `SkeletonList`; wpięte w accounts, portal-messages, schedule
+- [x] Pull-to-refresh (`RefreshControl`) w `accounts.tsx`, `portal-messages.tsx` (`schedule.tsx` miał już wcześniej)
+- [x] `services/haptics.ts` — helper `haptic(type)` (light/medium/heavy/selection/success/warning/error); crew.tsx/duty-details już mają bogaty feedback
+- [x] **Responsywny layout** — `fluidHorizontalPadding` (mniejsze marginesy 12–20 px wg szerokości), `maxContentWidth` tylko na tabletach (telefony wypełniają szerokość), `tileWidth` wyliczany (koniec martwych pasów po `47%`), kolumny 2/3 wg szerokości; `constants/layout.ts` + `useAppLayout.ts` + `Screen.tsx`
+- [x] **Praca: przełącznik widoków** — kompaktowy (lista modułów) / normalny (grid), zapis w AsyncStorage, ikona w nagłówku
+- [x] Animacje przejść ekranów w `app/(app)/_layout.tsx` (`slide_from_right`, 260 ms, gesture back)
+- [x] **reanimated 4.1.1 + lottie 7.3.1** zainstalowane (`npx expo install`), `babel.config.js` (babel-preset-expo → worklets plugin), Metro `-c`, bundle zweryfikowany (HTTP 200, 13 MB)
+- [x] **accentColor** — `useColors()` w `ThemeContext`, migracja **26 ekranów** z `Colors.dark/light`, picker 6 kolorów + zapis AsyncStorage; Paper `primary` też = akcent
+- [x] **Fluid typography** — skala tekstu S/M/L w ustawieniach (`textScaleFactor` w `useAppTheme`/`useAppLayout`), łączona z systemowym Dynamic Type (`PixelRatio.getFontScale()`)
+- [x] State-driven animations — `AnimatedEmptyState` (reanimated `useSharedValue`+`withRepeat`+`withTiming`, pulsująca ikona) w pustych stanach (konta, wiadomości)
+- [x] `components/LottieState.tsx` — wrapper `lottie-react-native` gotowy na JSON w `assets/lottie/`; działające puste stany dostarczone przez `AnimatedEmptyState` (bez assetów)
+- [~] Shared element / hero transitions — `sharedTransitionTag` NIEDOSTĘPNY w reanimated 4.1.1 (wymaga ≥4.2.0 + feature flag + New Arch + screens ≥4.16, niewspierane w Expo Go). Zamiast tego: `entering={FadeInDown}` (hero-like entrances)
+
+### 3B. Live Activities / Dynamic Island
+- [ ] ODROCZONE — wymaga płatnego Apple Developer (ActivityKit = `.appex`, niemożliwe na Personal Team). Plan w `.cursor/plans/plan_na_dzisiaj`.
+
+### 4–5. Git i Android
+- [ ] Commit zmian iOS na `main`
+- [ ] `git checkout android` + `git pull`, weryfikacja różnic względem main
+- [ ] `npx expo run:android --device` na Pixel 9a
+- [ ] Bugtest OOTB na Androidzie: rejestracja → sync grafiku → wyszukanie pociągu PLK; nowe wpisy w `known-bugs.md` (KB-013+)
+
+---
+
 ## Faza 1: Audyt i rebranding ✅
 
 - [x] Usunięcie dead code backendu (expenses, routines, notes, mdnotes, NOTES_DIR)

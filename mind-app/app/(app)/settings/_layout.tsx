@@ -1,10 +1,10 @@
 import { Stack } from 'expo-router';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Colors } from '../../../constants/theme';
 
 export default function SettingsLayout() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
 
   return (
     <Stack

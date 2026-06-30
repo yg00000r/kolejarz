@@ -11,14 +11,14 @@ import {
 } from 'react-native';
 import { TrainRunSession } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { isRunSessionValid, loadRunSession } from '../../../../services/trainSession';
 import { getQueue, QueuedMessage } from '../../../../services/messageQueue';
 import { Screen } from '../../../../components/Screen';
 
 export default function MessagesIndex() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [run, setRun] = useState<TrainRunSession | null>(null);

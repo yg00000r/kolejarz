@@ -8,6 +8,7 @@ import { AnimatedSplash } from '../components/AnimatedSplash';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { checkForUpdatesOnLaunch } from '../services/appUpdate';
+import { configureNotifications } from '../services/notifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,6 +18,7 @@ function ThemedApp() {
 
   useEffect(() => {
     SplashScreen.hideAsync();
+    void configureNotifications();
   }, []);
 
   const handleSplashFinish = useCallback(() => {

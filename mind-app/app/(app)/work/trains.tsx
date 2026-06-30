@@ -15,7 +15,7 @@ import {
 import { FadeSlideIn } from '../../../components/FadeSlideIn';
 import { Colors } from '../../../constants/theme';
 import { trainBadgeLabel, trainBadgeStyle } from '../../../constants/trainBadge';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 import {
   type TrainLive,
@@ -84,7 +84,7 @@ function StationTimes({ st, accentColor }: { st: TrainStation; accentColor: stri
 
 export default function TrainsScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
   const params = useLocalSearchParams<{ number?: string; date?: string }>();
 
@@ -301,7 +301,7 @@ export default function TrainsScreen() {
             <MaterialCommunityIcons name="train-variant" size={64} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>Wyszukaj pociąg</Text>
             <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-              Wpisz numer pociągu IC/TLK/RE i kliknij Szukaj (dziś) lub Wczoraj dla nocnych przyjazdów.
+              Wpisz numer pociągu do wyszukiwania. Wybierz Wczoraj dla przejazdów nocnych lub archiwalnych.
             </Text>
           </View>
         )}

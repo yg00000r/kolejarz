@@ -29,4 +29,4 @@ fi
 echo "→ Instalacja: $APP_PATH"
 echo "   Na: $DEVICE_NAME ($DEVICE_ID)"
 xcrun devicectl device install app --device "$DEVICE_ID" "$APP_PATH"
-echo "✓ Zainstalowano com.ygor.mind — ikona „Kolejarz” na ekranie głównym."
+echo "✓ Zainstalowano com.ygor.kolejarz — ikona „Kolejarz” na ekranie głównym."

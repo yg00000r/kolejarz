@@ -189,6 +189,43 @@ export async function fetchAccounts(): Promise<{ accounts: AccountBalance[] }> {
   return res.json();
 }
 
+// ── Portal: Crew on Trip (załoga pociągu) ─────────────
+
+export type CrewSegment = {
+  startTime: string | null;
+  startStation: string | null;
+  endTime: string | null;
+  endStation: string | null;
+};
+
+export type CrewMember = {
+  name: string;
+  crewType: string | null;
+  role: string;
+  phone: string | null;
+  segment: CrewSegment;
+};
+
+export type CrewOnTrip = {
+  tripNumber: string;
+  fromStation: string | null;
+  toStation: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  members: CrewMember[];
+  notFound?: boolean;
+};
+
+/**
+ * Fetches the crew (kierownik, konduktorzy, maszyniści) assigned to a train
+ * on a given date, via the backend `/crew` proxy (IVU `_-crew-on-trip-table`).
+ */
+export async function fetchCrewOnTrip(date: string, trip: string): Promise<CrewOnTrip> {
+  const res = await apiFetch(`/crew?date=${date}&trip=${encodeURIComponent(trip)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 // ── Sync ─────────────────────────────────────────────
 
 /**

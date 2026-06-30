@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { MESSAGE_TYPES, MessageTypeDef, TrainSession } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { isSessionValid, loadTrainSession } from '../../../../services/trainSession';
 import { Screen } from '../../../../components/Screen';
 import {
@@ -33,7 +33,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function ClassicScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [session, setSession] = useState<TrainSession | null>(null);

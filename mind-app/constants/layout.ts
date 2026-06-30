@@ -4,7 +4,22 @@
  */
 
 /** Width threshold for large iPhones (Pro Max line). */
-export const LARGE_PHONE_MIN_WIDTH = 430;
+export const LARGE_PHONE_MIN_WIDTH = 414;
+
+/** Width threshold for tablets / very wide layouts (constrain content width). */
+export const TABLET_MIN_WIDTH = 700;
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Fluid horizontal screen padding. Scales gently with width but stays tight,
+ * so large phones (Pro Max) don't get oversized side margins.
+ */
+export function fluidHorizontalPadding(width: number): number {
+  return Math.round(clamp(width * 0.038, 12, 20));
+}
 
 export const spacing = {
   xs: 8,
@@ -32,8 +47,8 @@ export const radius = {
 
 export const touchTargetMin = 44;
 
-/** Max readable content width on wide screens (Pro Max / tablet). */
-export const maxContentWidth = 520;
+/** Max readable content width — only constrains tablets / very wide screens. */
+export const maxContentWidth = 760;
 
 export const typography = {
   title: 32,

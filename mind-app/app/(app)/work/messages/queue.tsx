@@ -12,13 +12,13 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { clearQueue, getQueue, removeFromQueue, QueuedMessage } from '../../../../services/messageQueue';
 import { Screen } from '../../../../components/Screen';
 
 export default function QueueScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [items, setItems] = useState<QueuedMessage[]>(() => [...getQueue()]);

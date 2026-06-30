@@ -12,8 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { type Palette, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 import {
   Device,
@@ -22,7 +21,7 @@ import {
   monitoringService,
 } from '../../../services/monitoring';
 
-function StatusBadge({ online, colors }: { online: boolean; colors: typeof Colors.dark }) {
+function StatusBadge({ online, colors }: { online: boolean; colors: Palette }) {
   return (
     <View
       style={[
@@ -44,8 +43,7 @@ function StatusBadge({ online, colors }: { online: boolean; colors: typeof Color
 }
 
 export default function MonitoringScreen() {
-  const { isDark } = useTheme();
-  const colors = (isDark ? Colors.dark : Colors.light) as typeof Colors.dark;
+  const colors = useColors();
   const router = useRouter();
 
   const [devices, setDevices] = useState<Device[]>([]);

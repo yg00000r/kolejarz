@@ -24,7 +24,7 @@ import {
   type UlgaUstawowa,
 } from '../../../constants/abc';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 
 type Tab = 'oferty' | 'kody' | 'ulgi';
@@ -198,7 +198,7 @@ function UlgaCard({ ulga, colors, query }: { ulga: UlgaUstawowa; colors: any; qu
 
 export default function AbcScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [tab, setTab] = useState<Tab>('oferty');

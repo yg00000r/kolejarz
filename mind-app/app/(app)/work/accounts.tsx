@@ -2,11 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type AccountBalance, fetchAccounts } from '../../../services/work';
 import { Screen } from '../../../components/Screen';
+import { SkeletonList } from '../../../components/Skeleton';
+import { AnimatedEmptyState } from '../../../components/AnimatedEmptyState';
 
 const ACCOUNT_ICONS: Record<string, string> = {
   'Nadgodziny':    'clock-plus-outline',
@@ -37,20 +39,26 @@ function valueColor(value: string): string {
 
 export default function AccountsScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [accounts, setAccounts] = useState<AccountBalance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
-  const load = () => {
-    setLoading(true);
+  const load = (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     setError(false);
     fetchAccounts()
       .then((data) => setAccounts(data.accounts))
       .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  };
+
+  const onRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    load(true);
   };
 
   useEffect(() => { load(); }, []);
@@ -62,30 +70,29 @@ export default function AccountsScreen() {
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Konta</Text>
-        <TouchableOpacity onPress={load} hitSlop={8}>
+        <TouchableOpacity onPress={() => load()} hitSlop={8}>
           <MaterialCommunityIcons name="refresh" size={22} color={colors.accent} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} size="large" />
-        </View>
+        <SkeletonList count={6} />
       ) : error ? (
         <View style={styles.center}>
           <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Nie udało się pobrać sald</Text>
-          <TouchableOpacity onPress={load} style={[styles.retryBtn, { backgroundColor: colors.accent }]}>
+          <TouchableOpacity onPress={() => load()} style={[styles.retryBtn, { backgroundColor: colors.accent }]}>
             <Text style={styles.retryText}>Spróbuj ponownie</Text>
           </TouchableOpacity>
         </View>
       ) : accounts.length === 0 ? (
-        <View style={styles.center}>
-          <MaterialCommunityIcons name="chart-bar" size={48} color={colors.textSecondary} />
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Brak danych kont</Text>
-        </View>
+        <AnimatedEmptyState icon="chart-bar" title="Brak danych kont" subtitle="Pociągnij w dół, aby odświeżyć salda" />
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />}
+        >
           {accounts.map((acc, i) => {
             const icon = guessIcon(acc.name);
             const vColor = valueColor(acc.value);

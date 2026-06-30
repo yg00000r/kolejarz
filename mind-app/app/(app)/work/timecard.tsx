@@ -7,7 +7,7 @@ import { Screen } from '../../../components/Screen';
 import { ScreenHeader, ScreenHeaderIconButton } from '../../../components/ScreenHeader';
 import { radius } from '../../../constants/layout';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type Shift, confirmTimecard, confirmTimecardsBulk, fetchShifts, syncPortalStatus } from '../../../services/work';
 
 type SendStatus = 'idle' | 'sending' | 'done';
@@ -18,7 +18,7 @@ const MONTHS_PL = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz'
 
 export default function TimecardScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [pending, setPending] = useState<Shift[]>([]);

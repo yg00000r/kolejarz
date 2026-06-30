@@ -159,9 +159,40 @@ Zwraca tabelę z datą referencyjną (Stichtag) i saldami godzin.
 
 | Endpoint | Opis |
 |----------|------|
-| `/mbweb/main/matter/pad/crew-on-trip` | Formularz: Datum + Fahrtnummer (działa przez pad path) |
+| `/mbweb/main/matter/pad/crew-on-trip` | Formularz: data + numer pociągu (pad path) |
+| `/mbweb/main/matter/pad/_-crew-on-trip-table?beginDate=YYYY-MM-DD&tripNumber=XXXX&sync=true` | **Tabela załogi (JSON-less HTML). NIE blokowany przez Akamai.** |
 
-Desktop path zwraca 403 (Akamai).
+> **Recon 2026-06-20 (`recon_crew.py`):** endpoint danych to `_-crew-on-trip-table`.
+> Kluczowe: parametr daty to **`beginDate`** (jak reszta portalu), NIE `date`.
+> Zła nazwa param → błąd `"Cannot invoke String.length() because text is null"`.
+> Desktop path zwraca 403, ale **pad path działa** (200, bez Akamai).
+
+**Struktura odpowiedzi HTML:**
+
+Nagłówek `.tripInfo`:
+| Selektor | Pole | Przykład |
+|----------|------|----------|
+| `.trip-title` | Numer pociągu | 6200 |
+| `.trip-info-header .mdl-cell` (`.desc`/`.cont`) | Fahrtnummer, Von, Beginn, Nach, Ende | 6200 / Wrocław Główny / 05:41 / Lublin Główny / 10:47 |
+
+Załoga — kontener `.crew-data` (może być kilka grup `#crew-data-0`, `#crew-data-1`),
+każdy członek to `.ivupad-card` z `ul.crew-table-row` i pozycjami `li.crew-info-column[title]`:
+
+| `title` atrybutu | Pole | Przykład |
+|------------------|------|----------|
+| `Name` | Imię i nazwisko | `<IMIE NAZWISKO>` |
+| `Telefonnummer` | Telefon (`<a href="tel:...">`) | `<TEL>` (opcjonalne) |
+| `Besatzungstyp` | Typ obsady | `K`, `KP`, `M` |
+| `Beginn und Anfangsort` | Czas + stacja startu | `05:41 WR_GL` |
+| `Ende und Zielort` | Czas + stacja końca | `07:56 KONIE` |
+
+**Typy obsady (Besatzungstyp):**
+- `KP` — Kierownik Pociągu
+- `K` — Konduktor
+- `M` — Maszynista (Triebfahrzeugführer)
+
+Stacje w skrócie (np. `WR_GL` = Wrocław Główny, `KONIE` = Koniecpol, `CZE_STR`, `LUB` = Lublin).
+Każdy członek ma własny odcinek (od/do) — różne osoby na różnych częściach trasy.
 
 ### 10. Wyszukiwanie służb
 

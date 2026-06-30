@@ -14,7 +14,7 @@ import DODATEK_A_RAW from '../../../constants/dodatek_a.json';
 import DODATEK_B_RAW from '../../../constants/dodatek_b.json';
 import { Colors } from '../../../constants/theme';
 import { trainBadgeStyle } from '../../../constants/trainBadge';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors, Palette } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ function buildSklad(train: Train): SkladEntry[] {
 function SkladRow({ entry, accent, colors }: {
   entry: SkladEntry;
   accent: string;
-  colors: typeof Colors.dark | typeof Colors.light;
+  colors: Palette;
 }) {
   const badgeBg = entry.isLok ? '#1E293B' : entry.isEmu ? '#0F172A' : accent + '22';
   const badgeColor = entry.isLok ? '#F8FAFC' : entry.isEmu ? '#94A3B8' : accent;
@@ -167,7 +167,7 @@ function SkladRow({ entry, accent, colors }: {
 
 // ─── Train card ───────────────────────────────────────────────────────────────
 
-function TrainCard({ train, colors }: { train: Train; colors: typeof Colors.dark | typeof Colors.light }) {
+function TrainCard({ train, colors }: { train: Train; colors: Palette }) {
   const [open, setOpen] = useState(false);
   const badge = trainBadgeStyle(train.kategoria, '');
   const cc = badge.bg;
@@ -263,7 +263,7 @@ type Tab = 'A' | 'B';
 
 export default function DodatkiScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [tab, setTab] = useState<Tab>('A');

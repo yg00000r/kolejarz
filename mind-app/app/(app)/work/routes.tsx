@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity
 import { ScreenHeader } from '../../../components/ScreenHeader';
 import { Screen } from '../../../components/Screen';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import {
   createRouteControl,
   createRouteDefinition,
@@ -38,7 +38,7 @@ function alertApiError(title: string, err: unknown, fallback: string) {
 
 export default function RouteControlsScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
 
   const [routes, setRoutes] = useState<RouteControlRoute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +189,7 @@ export default function RouteControlsScreen() {
       {routes.length === 0 ? (
         <View style={styles.centerCard}>
           <MaterialCommunityIcons name="map-marker-path" size={48} color={colors.textSecondary} />
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Brak szlaków. Dodaj pierwszą kontrolkę.</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Brak szlaków. Dodaj swój pierwszy szlak</Text>
         </View>
       ) : routes.map(route => {
         const control = route.control;

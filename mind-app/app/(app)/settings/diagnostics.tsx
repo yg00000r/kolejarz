@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../../constants/theme';
 import { BASE_URL } from '../../../constants/api';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 
 type HealthData = {
@@ -28,7 +28,7 @@ type DiagResult = {
 
 export default function DiagnosticsScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
 
   const [loading, setLoading] = useState<string | null>(null);
   const [diag, setDiag] = useState<DiagResult>({

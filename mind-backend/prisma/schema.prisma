@@ -34,7 +34,7 @@ model Device {
 
 model Shift {
   id             Int      @id @default(autoincrement())
-  date           String   @unique
+  date           String
   shiftCode      String
   startTime      String?
   endTime        String?
@@ -42,10 +42,12 @@ model Shift {
   allocationId   String?
   planningLevel  String?                       // Plan | Wykonanie
   timecardStatus String?                       // Zatwierdzona | Wydana | implicit-confirmation-needed | ...
-  tenantId       Int?
-  tenant         Tenant?  @relation(fields: [tenantId], references: [id])
+  tenantId       Int
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId, date])
 }
 
 model RouteDefinition {

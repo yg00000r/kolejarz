@@ -75,6 +75,35 @@ export type AccountBalance = {
   referenceDate: string;
 };
 
+/** Pojedynczy odcinek pracy członka załogi (od stacji A do stacji B). */
+export type CrewSegment = {
+  startTime: string | null;
+  startStation: string | null;
+  endTime: string | null;
+  endStation: string | null;
+};
+
+/** Członek drużyny pociągowej (kierownik, konduktor, maszynista). */
+export type CrewMember = {
+  name: string;
+  /** Surowy kod typu obsady: KP, K, M, ... */
+  crewType: string | null;
+  /** Czytelna rola po polsku: "Kierownik pociągu", "Konduktor", "Maszynista". */
+  role: string;
+  phone: string | null;
+  segment: CrewSegment;
+};
+
+/** Pełna odpowiedź wyszukiwania załogi pociągu. */
+export type CrewOnTrip = {
+  tripNumber: string;
+  fromStation: string | null;
+  toStation: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  members: CrewMember[];
+};
+
 // ── HTTP helpers ──────────────────────────────────────
 
 const PORTAL_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148';
@@ -83,13 +112,35 @@ function portalHeaders(extra: Record<string, string> = {}): Record<string, strin
   return { 'User-Agent': PORTAL_UA, ...extra };
 }
 
-// ── Session management ────────────────────────────────
+// ── Session management (per portal username) ───────────
 
-let cachedToken: string | null = null;
-let sessionCookies: string[] = [];
-let sessionEstablished = false;
-let tokenTimestamp = 0;
+type PortalSessionState = {
+  cachedToken: string | null;
+  sessionCookies: string[];
+  sessionEstablished: boolean;
+  tokenTimestamp: number;
+};
+
+const sessions = new Map<string, PortalSessionState>();
 const TOKEN_TTL_MS = 20 * 60 * 60 * 1000; // 20h (JWT valid ~24h per "dur":"P1D")
+
+export function defaultPortalUser(): string {
+  return process.env.PORTAL_USER ?? 'idutkiewicz';
+}
+
+function getSession(sessionKey: string): PortalSessionState {
+  let session = sessions.get(sessionKey);
+  if (!session) {
+    session = {
+      cachedToken: null,
+      sessionCookies: [],
+      sessionEstablished: false,
+      tokenTimestamp: 0,
+    };
+    sessions.set(sessionKey, session);
+  }
+  return session;
+}
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -167,10 +218,11 @@ export function getPortalAutoPasswordAttempts(): string[] {
  * @returns JWT token string
  */
 export async function login(user?: string, pass?: string): Promise<string> {
-  const username = user ?? process.env.PORTAL_USER ?? 'idutkiewicz';
+  const username = user ?? defaultPortalUser();
+  const session = getSession(username);
 
-  if (cachedToken && Date.now() - tokenTimestamp < TOKEN_TTL_MS) {
-    return cachedToken;
+  if (session.cachedToken && Date.now() - session.tokenTimestamp < TOKEN_TTL_MS) {
+    return session.cachedToken;
   }
 
   console.log(`[Portal] Logging in as ${username}...`);
@@ -214,20 +266,23 @@ export async function login(user?: string, pass?: string): Promise<string> {
       continue;
     }
 
-    cachedToken = token;
-    tokenTimestamp = Date.now();
-    console.log('[Portal] Login successful, token cached');
+    session.cachedToken = token;
+    session.tokenTimestamp = Date.now();
+    session.sessionCookies = [];
+    session.sessionEstablished = false;
+    console.log(`[Portal] Login successful for ${username}, token cached`);
     return token;
   }
 
   throw new Error('Portal login failed: all password attempts exhausted');
 }
 
-export function clearToken(): void {
-  cachedToken = null;
-  sessionCookies = [];
-  sessionEstablished = false;
-  tokenTimestamp = 0;
+export function clearToken(sessionKey?: string): void {
+  if (sessionKey) {
+    sessions.delete(sessionKey);
+    return;
+  }
+  sessions.clear();
 }
 
 function extractSetCookies(res: Response): string[] {
@@ -250,9 +305,10 @@ function mergeCookies(existing: string[], incoming: string[]): string[] {
 
 // ── Fetching ───────────────────────────────────────────
 
-async function portalFetch(path: string, token: string): Promise<string> {
+async function portalFetch(path: string, token: string, sessionKey: string): Promise<string> {
+  const session = getSession(sessionKey);
   const url = `${DESKTOP_BASE}/${path}`;
-  const cookieParts = [`IvuPadAuthToken=${token}`, ...sessionCookies];
+  const cookieParts = [`IvuPadAuthToken=${token}`, ...session.sessionCookies];
   const res = await fetch(url, {
     headers: portalHeaders({
       Cookie: cookieParts.join('; '),
@@ -263,11 +319,11 @@ async function portalFetch(path: string, token: string): Promise<string> {
 
   const newCookies = extractSetCookies(res);
   if (newCookies.length > 0) {
-    sessionCookies = mergeCookies(sessionCookies, newCookies);
+    session.sessionCookies = mergeCookies(session.sessionCookies, newCookies);
   }
 
   if (res.status === 401 || res.status === 403) {
-    clearToken();
+    clearToken(sessionKey);
     throw new Error(`Portal auth expired (${res.status}), re-login needed`);
   }
 
@@ -278,11 +334,12 @@ async function portalFetch(path: string, token: string): Promise<string> {
   return res.text();
 }
 
-async function ensureSession(token: string): Promise<void> {
-  if (sessionEstablished) return;
-  await portalFetch('_-duty-table?beginDate=2026-01-01&sync=true', token);
-  sessionEstablished = true;
-  console.log('[Portal] Session established (JSESSIONID acquired)');
+async function ensureSession(token: string, sessionKey: string): Promise<void> {
+  const session = getSession(sessionKey);
+  if (session.sessionEstablished) return;
+  await portalFetch('_-duty-table?beginDate=2026-01-01&sync=true', token, sessionKey);
+  session.sessionEstablished = true;
+  console.log(`[Portal] Session established for ${sessionKey} (JSESSIONID acquired)`);
 }
 
 /**
@@ -297,12 +354,18 @@ async function ensureSession(token: string): Promise<void> {
  * @param month - 1-based month (1=Jan, 12=Dec)
  * @returns raw HTML string to be parsed by `parseDutyTable()`
  */
-export async function fetchDutyTable(token: string, year: number, month: number): Promise<string> {
+export async function fetchDutyTable(
+  token: string,
+  year: number,
+  month: number,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  const session = getSession(sessionKey);
   const m = String(month).padStart(2, '0');
-  const html = await portalFetch(`_-duty-table?beginDate=${year}-${m}-01&sync=true`, token);
-  if (!sessionEstablished) {
-    sessionEstablished = true;
-    console.log('[Portal] Session established via duty-table fetch');
+  const html = await portalFetch(`_-duty-table?beginDate=${year}-${m}-01&sync=true`, token, sessionKey);
+  if (!session.sessionEstablished) {
+    session.sessionEstablished = true;
+    console.log(`[Portal] Session established for ${sessionKey} via duty-table fetch`);
   }
   return html;
 }
@@ -330,31 +393,97 @@ function extractShiftType(classes: string): 'presence' | 'offday' {
 
 // ── Fetch: duty details (shift breakdown) ─────────────
 
-export async function fetchDutyDetails(token: string, date: string): Promise<string> {
-  await ensureSession(token);
-  return portalFetch(`duty-details?beginDate=${date}&sync=true`, token);
+export async function fetchDutyDetails(
+  token: string,
+  date: string,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  await ensureSession(token, sessionKey);
+  return portalFetch(`duty-details?beginDate=${date}&sync=true`, token, sessionKey);
 }
 
 // ── Fetch: actual duties table ────────────────────────
 
-export async function fetchActualDuties(token: string, year: number, month: number): Promise<string> {
-  await ensureSession(token);
+export async function fetchActualDuties(
+  token: string,
+  year: number,
+  month: number,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  await ensureSession(token, sessionKey);
   const m = String(month).padStart(2, '0');
-  return portalFetch(`_-actual-duties-table?beginDate=${year}-${m}-01&sync=true`, token);
+  return portalFetch(`_-actual-duties-table?beginDate=${year}-${m}-01&sync=true`, token, sessionKey);
 }
 
 // ── Fetch: messages ───────────────────────────────────
 
-export async function fetchMessages(token: string, page: number): Promise<string> {
-  await ensureSession(token);
-  return portalFetch(`_-messages-table?page=${page}&sync=true`, token);
+export async function fetchMessages(
+  token: string,
+  page: number,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  await ensureSession(token, sessionKey);
+  return portalFetch(`_-messages-table?page=${page}&sync=true`, token, sessionKey);
 }
 
 // ── Fetch: accounts overview ──────────────────────────
 
-export async function fetchAccounts(token: string): Promise<string> {
-  await ensureSession(token);
-  return portalFetch(`accounts-overview?sync=true`, token);
+export async function fetchAccounts(
+  token: string,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  await ensureSession(token, sessionKey);
+  return portalFetch(`accounts-overview?sync=true`, token, sessionKey);
+}
+
+// ── Fetch: crew on trip (załoga pociągu) ──────────────
+
+/**
+ * Fetches the crew (Besatzung) assigned to a given train on a given date.
+ *
+ * Uses the PAD path `_-crew-on-trip-table` which (unlike the desktop path)
+ * is NOT blocked by Akamai. The date parameter MUST be `beginDate` (the same
+ * convention as the rest of the portal) — using `date` triggers a server-side
+ * NPE ("text is null").
+ *
+ * @param token - JWT from `login()`
+ * @param date  - ISO date string YYYY-MM-DD
+ * @param tripNumber - train number (e.g. "6200")
+ * @returns raw HTML to be parsed by `parseCrewOnTrip()`
+ */
+export async function fetchCrewOnTrip(
+  token: string,
+  date: string,
+  tripNumber: string,
+  sessionKey: string = defaultPortalUser(),
+): Promise<string> {
+  const session = getSession(sessionKey);
+  await ensureSession(token, sessionKey);
+  const url = `${PORTAL_BASE}/mbweb/main/matter/pad/_-crew-on-trip-table?beginDate=${date}&tripNumber=${encodeURIComponent(tripNumber)}&sync=true`;
+  const cookieParts = [`IvuPadAuthToken=${token}`, ...session.sessionCookies];
+  const res = await fetch(url, {
+    headers: portalHeaders({
+      Cookie: cookieParts.join('; '),
+      Authorization: `Bearer ${token}`,
+    }),
+    redirect: 'manual',
+  });
+
+  const newCookies = extractSetCookies(res);
+  if (newCookies.length > 0) {
+    session.sessionCookies = mergeCookies(session.sessionCookies, newCookies);
+  }
+
+  if (res.status === 401 || res.status === 403) {
+    clearToken(sessionKey);
+    throw new Error(`Portal auth expired (${res.status}), re-login needed`);
+  }
+
+  if (!res.ok && res.status !== 302) {
+    throw new Error(`Portal crew-on-trip: ${res.status}`);
+  }
+
+  return res.text();
 }
 
 // ── Parsing ────────────────────────────────────────────
@@ -539,6 +668,134 @@ export function parseAccounts(html: string): AccountBalance[] {
   return accounts;
 }
 
+// ── Parsing: crew on trip ─────────────────────────────
+
+/** Tłumaczy nazwy nieobsadzonych pozycji na polski. */
+function normalizeCrewName(name: string): string {
+  const lower = name.trim().toLowerCase();
+  if (lower === 'unoccupied' || lower === 'unbesetzt' || lower === 'nieobsadzony') {
+    return 'Nieobsadzone';
+  }
+  return name.trim();
+}
+
+/** Mapuje kod obsady IVU na czytelną rolę po polsku. */
+function resolveCrewRole(crewType: string | null): string {
+  switch ((crewType ?? '').toUpperCase()) {
+    case 'KP':
+      return 'Kierownik pociągu';
+    case 'K':
+      return 'Konduktor';
+    case 'M':
+      return 'Maszynista';
+    default:
+      return crewType ? `Obsada ${crewType}` : 'Załoga';
+  }
+}
+
+/** Rozdziela tekst "HH:MM STACJA" na czas i kod stacji. */
+function splitTimeStation(raw: string): { time: string | null; station: string | null } {
+  const text = raw.replace(/\u00a0/g, ' ').trim();
+  if (!text) return { time: null, station: null };
+  const m = text.match(/^(\d{1,2}:\d{2})\s*(.*)$/);
+  if (m) {
+    return { time: m[1], station: m[2].trim() || null };
+  }
+  return { time: null, station: text };
+}
+
+/**
+ * Parses the crew-on-trip HTML into a structured `CrewOnTrip` object.
+ *
+ * Reads the `.tripInfo` header (train number, from/to stations, start/end times)
+ * and each `.crew-table-row` (one per crew member). Crew columns are identified
+ * by their `title` attribute (Name, Telefonnummer, Besatzungstyp,
+ * "Beginn und Anfangsort", "Ende und Zielort").
+ *
+ * @param html - raw HTML from `fetchCrewOnTrip()`
+ * @returns structured crew data, or null if no trip found / server error
+ */
+export function parseCrewOnTrip(html: string): CrewOnTrip | null {
+  // Serwer zwraca error-view gdy zły param lub brak danych
+  if (html.includes('id="error-view"') || html.includes('text is null')) {
+    return null;
+  }
+
+  const $ = cheerio.load(html);
+
+  const tripInfo = $('.tripInfo').first();
+  if (tripInfo.length === 0) return null;
+
+  const tripNumber = tripInfo.find('.trip-title').first().text().trim();
+
+  // Nagłówek: pary .desc → .cont
+  const header: Record<string, string> = {};
+  tripInfo.find('.trip-info-header .mdl-cell').each((_i, cell) => {
+    const desc = $(cell).find('.desc').text().trim();
+    const cont = $(cell).find('.cont').text().trim();
+    if (desc) header[desc] = cont;
+  });
+
+  const fromStation = header['Von'] || header['Od'] || null;
+  const toStation = header['Nach'] || header['Do'] || null;
+  const startTime = header['Beginn'] || header['Początek'] || null;
+  const endTime = header['Ende'] || header['Koniec'] || null;
+
+  const members: CrewMember[] = [];
+
+  $('ul.crew-table-row').each((_i, ul) => {
+    // Columns are identified by their language-independent material-icons name
+    // (person/people/call/location_on/flag) — the `title` attribute is
+    // localized (German "Besatzungstyp" vs English "Crew type") and unreliable.
+    const byIcon = (icon: string) =>
+      $(ul)
+        .find('li.crew-info-column')
+        .filter((_j, el) => $(el).find('i.material-icons').first().text().trim() === icon)
+        .first();
+
+    const valueOf = (icon: string): string =>
+      byIcon(icon).find('span, a').first().text().trim();
+
+    const name = valueOf('person');
+    if (!name) return;
+
+    const crewType = valueOf('people') || null;
+
+    const phoneRaw = (() => {
+      const li = byIcon('call');
+      const href = li.find('a').attr('href');
+      if (href?.startsWith('tel:')) return href.slice(4);
+      const txt = li.find('a, span').first().text().trim();
+      return txt || null;
+    })();
+
+    const begin = splitTimeStation(valueOf('location_on'));
+    const end = splitTimeStation(valueOf('flag'));
+
+    members.push({
+      name: normalizeCrewName(name),
+      crewType,
+      role: resolveCrewRole(crewType),
+      phone: phoneRaw ? phoneRaw.replace(/\s+/g, '') : null,
+      segment: {
+        startTime: begin.time,
+        startStation: begin.station,
+        endTime: end.time,
+        endStation: end.station,
+      },
+    });
+  });
+
+  return {
+    tripNumber: tripNumber || '',
+    fromStation,
+    toStation,
+    startTime,
+    endTime,
+    members,
+  };
+}
+
 // ── Health check ───────────────────────────────────────
 
 export async function portalHealthCheck(): Promise<{ ok: boolean; loggedIn: boolean; error?: string }> {
@@ -564,10 +821,12 @@ export async function confirmAllocationHttp(
   token: string,
   allocationId: string,
   employeeId?: string | null,
+  sessionKey: string = defaultPortalUser(),
 ): Promise<ConfirmAllocationHttpResult> {
-  await ensureSession(token);
+  const session = getSession(sessionKey);
+  await ensureSession(token, sessionKey);
   const url = `${DESKTOP_BASE}/_-json-confirm-allocation`;
-  const cookieParts = [`IvuPadAuthToken=${token}`, ...sessionCookies];
+  const cookieParts = [`IvuPadAuthToken=${token}`, ...session.sessionCookies];
 
   const commonHeaders = portalHeaders({
     Cookie: cookieParts.join('; '),
@@ -635,8 +894,9 @@ export async function confirmAllocationHttp(
 
 // ── Session state export (for Playwright handoff) ──────
 
-export function getSessionState(): { token: string | null; cookies: string[] } {
-  return { token: cachedToken, cookies: [...sessionCookies] };
+export function getSessionState(sessionKey: string = defaultPortalUser()): { token: string | null; cookies: string[] } {
+  const session = getSession(sessionKey);
+  return { token: session.cachedToken, cookies: [...session.sessionCookies] };
 }
 
 // ── Parsing: duty table ────────────────────────────────

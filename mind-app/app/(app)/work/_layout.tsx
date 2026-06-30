@@ -20,6 +20,7 @@ export default function WorkLayout() {
       <Stack.Screen name="timecard" />
       <Stack.Screen name="messages" />
       <Stack.Screen name="trains" />
+      <Stack.Screen name="crew" />
       <Stack.Screen name="routes" />
       <Stack.Screen name="station" />
       <Stack.Screen name="abc" />

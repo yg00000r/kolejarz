@@ -2,15 +2,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type PortalMessage, fetchPortalMessages } from '../../../services/work';
 import { Screen } from '../../../components/Screen';
+import { SkeletonList } from '../../../components/Skeleton';
+import { AnimatedEmptyState } from '../../../components/AnimatedEmptyState';
 
 export default function PortalMessagesScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [messages, setMessages] = useState<PortalMessage[]>([]);
@@ -18,11 +20,13 @@ export default function PortalMessagesScreen() {
   const [nextPage, setNextPage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const load = useCallback(async (p: number, append = false) => {
-    if (!append) setLoading(true);
+  const load = useCallback(async (p: number, append = false, isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else if (!append) setLoading(true);
     else setLoadingMore(true);
     setError(false);
     try {
@@ -35,10 +39,16 @@ export default function PortalMessagesScreen() {
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => { load(1); }, [load]);
+
+  const onRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    load(1, false, true);
+  };
 
   const toggleExpanded = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -69,9 +79,7 @@ export default function PortalMessagesScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} size="large" />
-        </View>
+        <SkeletonList count={6} />
       ) : error ? (
         <View style={styles.center}>
           <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.textSecondary} />
@@ -81,12 +89,13 @@ export default function PortalMessagesScreen() {
           </TouchableOpacity>
         </View>
       ) : messages.length === 0 ? (
-        <View style={styles.center}>
-          <MaterialCommunityIcons name="email-open-outline" size={48} color={colors.textSecondary} />
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Brak wiadomości</Text>
-        </View>
+        <AnimatedEmptyState icon="email-open-outline" title="Brak wiadomości" subtitle="Twoja skrzynka portalu jest pusta" />
       ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />}
+        >
           {messages.map((msg) => {
             const isOpen = expanded.has(msg.id);
             return (

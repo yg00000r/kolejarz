@@ -1,5 +1,4 @@
 import { chromium, Browser } from 'playwright-core';
-import { login as portalLogin } from './portal';
 
 const PORTAL_BASE = 'https://portal.intercity.pl';
 const DESKTOP_BASE = `${PORTAL_BASE}/mbweb/main/matter/desktop`;
@@ -9,11 +8,11 @@ const CHROMIUM_PATH = process.env.CHROMIUM_PATH || '/usr/bin/chromium';
 export async function confirmTimecardPlaywright(
   date: string,
   allocationId: string,
+  token: string,
 ): Promise<{ success: boolean; message: string }> {
   let browser: Browser | null = null;
 
   try {
-    const token = await portalLogin();
 
     browser = await chromium.launch({
       executablePath: CHROMIUM_PATH,

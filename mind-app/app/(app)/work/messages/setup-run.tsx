@@ -21,7 +21,7 @@ import {
   TrainStop,
 } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import {
   loadRunSession,
   saveRunSession,
@@ -50,7 +50,7 @@ function todayISO(): string {
 
 export default function SetupRunScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [step, setStep] = useState<Step>('search');

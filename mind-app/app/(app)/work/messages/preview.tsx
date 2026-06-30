@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { MessageTypeId } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { addToQueue } from '../../../../services/messageQueue';
 import { Screen } from '../../../../components/Screen';
 
 export default function PreviewScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const { text, title, typeId, fromQueue } = useLocalSearchParams<{

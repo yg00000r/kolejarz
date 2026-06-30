@@ -28,7 +28,7 @@ import {
   workStops,
 } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import {
   isRunSessionValid,
   loadRunSession,
@@ -213,7 +213,7 @@ function buildMessages(
 
 export default function WatchScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [run, setRun] = useState<TrainRunSession | null>(null);

@@ -33,7 +33,9 @@ export default function AppLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: 'fade',
+          animation: 'slide_from_right',
+          animationDuration: 260,
+          gestureEnabled: true,
           contentStyle: { backgroundColor: colors.background },
         }}
       />

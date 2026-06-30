@@ -34,7 +34,7 @@ import {
   generatePozegnalny,
 } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { loadTrainSession } from '../../../../services/trainSession';
 import { Screen } from '../../../../components/Screen';
 
@@ -166,7 +166,7 @@ function AirportPicker({ value, onChange, colors }: { value: string; onChange: (
 
 export default function ComposeScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
   const { typeId } = useLocalSearchParams<{ typeId: MessageTypeId }>();
 

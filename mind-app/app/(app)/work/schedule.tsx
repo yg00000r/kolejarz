@@ -2,11 +2,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors, Palette } from '../../../contexts/ThemeContext';
 import { type Shift, type ShiftTyp, fetchShifts, scheduleTimecardReminder } from '../../../services/work';
+import { getNotifPrefs } from '../../../services/notifications';
 import { Screen } from '../../../components/Screen';
+import { SkeletonList } from '../../../components/Skeleton';
 
 // ── Konfiguracja typów służb ──────────────────────────
 const TYP_COLOR: Record<ShiftTyp | 'nieznany', string> = {
@@ -83,7 +85,7 @@ function CalendarCell({
   onWorkPress,
 }: {
   entry: DayEntry | null;
-  colors: typeof Colors.light | typeof Colors.dark;
+  colors: Palette;
   onWorkPress: (date: string, shiftCode: string) => void;
 }) {
   if (entry === null) {
@@ -120,7 +122,7 @@ function CalendarCell({
 
 export default function ScheduleScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const now = new Date();
@@ -138,9 +140,12 @@ export default function ScheduleScreen() {
     try {
       const data = await fetchShifts(m + 1, y);
       setShifts(data);
-      for (const shift of data) {
-        if (shift.statusKarty === 'do_potwierdzenia' && shift.typ === 'praca') {
-          scheduleTimecardReminder(shift).catch(() => {});
+      const prefs = await getNotifPrefs();
+      if (prefs.timecardReminder) {
+        for (const shift of data) {
+          if (shift.statusKarty === 'do_potwierdzenia' && shift.typ === 'praca') {
+            scheduleTimecardReminder(shift).catch(() => {});
+          }
         }
       }
     } catch {
@@ -241,9 +246,7 @@ export default function ScheduleScreen() {
       )}
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} size="large" />
-        </View>
+        <SkeletonList count={7} />
       ) : error ? (
         <View style={styles.center}>
           <MaterialCommunityIcons name="wifi-off" size={48} color={colors.textSecondary} />

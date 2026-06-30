@@ -24,9 +24,17 @@ import {
 } from '../../../services/appUpdate';
 import * as Updates from 'expo-updates';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useTheme } from '../../../contexts/ThemeContext';
-import { ThemeMode } from '../../../hooks/useAppTheme';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
+import { ACCENT_PRESETS, ThemeMode, type TextScale } from '../../../hooks/useAppTheme';
+import { useNotificationSetup } from '../../../hooks/useNotificationSetup';
 import { Screen } from '../../../components/Screen';
+
+const SHIFT_ALARM_OPTIONS = [30, 60, 120];
+const TEXT_SCALE_OPTIONS: { scale: TextScale; label: string }[] = [
+  { scale: 'S', label: 'Mała' },
+  { scale: 'M', label: 'Średnia' },
+  { scale: 'L', label: 'Duża' },
+];
 
 function versionDisplayLine(): string {
   const build = Application.nativeBuildVersion;
@@ -42,7 +50,15 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { isDark, mode: themeMode, setThemeMode } = useTheme();
+  const {
+    isDark,
+    mode: themeMode,
+    setThemeMode,
+    accentCustom,
+    setAccent,
+    textScale,
+    setTextScale,
+  } = useTheme();
   const {
     employeeNumber,
     biometricsEnabled,
@@ -53,7 +69,28 @@ export default function SettingsScreen() {
     logout,
   } = useAuth();
   const router = useRouter();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
+
+  const {
+    prefs: notifPrefs,
+    toggleShiftAlarm,
+    toggleTimecardReminder,
+    setShiftAlarmMinutes,
+  } = useNotificationSetup();
+
+  const handleNotifToggle = async (
+    fn: (v: boolean) => Promise<boolean>,
+    value: boolean,
+  ) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const ok = await fn(value);
+    if (!ok && value) {
+      Alert.alert(
+        'Powiadomienia',
+        'Aby włączyć przypomnienia, zezwól na powiadomienia w Ustawieniach systemu.',
+      );
+    }
+  };
 
   const [portalStatus, setPortalStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'ok' | 'available' | 'error'>('idle');
@@ -310,6 +347,94 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+
+          <View style={[styles.row, styles.rowBorder, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+            <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Kolor akcentu</Text>
+            <View style={styles.accentRow}>
+              {ACCENT_PRESETS.map((c) => {
+                const active = (accentCustom ?? ACCENT_PRESETS[0]) === c;
+                return (
+                  <TouchableOpacity
+                    key={c}
+                    onPress={() => { Haptics.selectionAsync(); void setAccent(c === ACCENT_PRESETS[0] ? null : c); }}
+                    style={[styles.accentSwatch, { backgroundColor: c }, active && { borderColor: colors.text, borderWidth: 2.5 }]}
+                    activeOpacity={0.7}
+                  >
+                    {active && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="format-size" size={20} color={colors.textSecondary} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Rozmiar tekstu</Text>
+            <View style={styles.minutesRow}>
+              {TEXT_SCALE_OPTIONS.map((opt) => {
+                const active = textScale === opt.scale;
+                return (
+                  <TouchableOpacity
+                    key={opt.scale}
+                    style={[styles.minutesChip, { backgroundColor: active ? colors.accent : colors.surfaceSecondary }]}
+                    onPress={() => { Haptics.selectionAsync(); void setTextScale(opt.scale); }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.minutesChipText, { color: active ? '#fff' : colors.textSecondary }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        {/* Powiadomienia (Asystent) */}
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Powiadomienia (Asystent)</Text>
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          <View style={[styles.row, styles.rowBorder, { borderBottomColor: colors.border }]}>
+            <MaterialCommunityIcons name="alarm" size={20} color={colors.textSecondary} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Alarm przed służbą</Text>
+            <Switch
+              value={notifPrefs.shiftAlarm}
+              onValueChange={(v) => handleNotifToggle(toggleShiftAlarm, v)}
+              color={colors.accent}
+            />
+          </View>
+          {notifPrefs.shiftAlarm && (
+            <View style={[styles.row, styles.rowBorder, { borderBottomColor: colors.border }]}>
+              <MaterialCommunityIcons name="clock-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Wyprzedzenie</Text>
+              <View style={styles.minutesRow}>
+                {SHIFT_ALARM_OPTIONS.map((min) => {
+                  const active = notifPrefs.shiftAlarmMinutes === min;
+                  return (
+                    <TouchableOpacity
+                      key={min}
+                      style={[styles.minutesChip, { backgroundColor: active ? colors.accent : colors.surfaceSecondary }]}
+                      onPress={() => { Haptics.selectionAsync(); void setShiftAlarmMinutes(min); }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.minutesChipText, { color: active ? '#fff' : colors.textSecondary }]}>
+                        {min < 60 ? `${min} min` : `${min / 60} h`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="clipboard-check-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Przypomnienie o karcie pracy</Text>
+            <Switch
+              value={notifPrefs.timecardReminder}
+              onValueChange={(v) => handleNotifToggle(toggleTimecardReminder, v)}
+              color={colors.accent}
+            />
+          </View>
         </View>
 
         {/* Portal */}
@@ -452,6 +577,32 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  minutesRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  accentRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  accentSwatch: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: 'transparent',
+  },
+  minutesChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  minutesChipText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   themeRow: {
     flexDirection: 'row',

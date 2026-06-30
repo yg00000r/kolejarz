@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { EMPTY_SESSION, GastroType, TrainSession } from '../../../../constants/komunikaty';
 import { Colors } from '../../../../constants/theme';
-import { useTheme } from '../../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { clearTrainSession, loadTrainSession, saveTrainSession } from '../../../../services/trainSession';
 import { Screen } from '../../../../components/Screen';
 
@@ -34,7 +34,7 @@ const GASTRO_OPTIONS: { value: GastroType; label: string; desc: string }[] = [
 
 export default function SessionScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [form, setForm] = useState<TrainSession>(EMPTY_SESSION);

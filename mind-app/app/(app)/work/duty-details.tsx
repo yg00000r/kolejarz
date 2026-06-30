@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../../constants/theme';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type DutyDetails, fetchDutyDetails } from '../../../services/work';
 import { Screen } from '../../../components/Screen';
 
@@ -34,7 +34,7 @@ const COMPONENT_ICON: Record<string, string> = {
 
 export default function DutyDetailsScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
   const { date, shiftCode } = useLocalSearchParams<{ date: string; shiftCode: string }>();
 

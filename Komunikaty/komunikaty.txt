@@ -1,0 +1,227 @@
+#Powitalny-Startowy
+
+Kiedy się go uzywa?
+Pomiedzy stacjami w miescie, w ktorym pociag zaczyna bieg.
+
+Komunikat:
+,,Nastepna stacja: [Wstaw nazwe stacji]."
+(Jesli w pociagu znajduje sie oferta gastronomiczna, dodać:)
+,,Zapraszamy do skorzystania z oferty gastronomicznej."
+
+
+#Powitalny-Rozszerzony
+
+Kiedy sie go uzywa?
+Za miastem w którym pociag rozpocząl bieg;
+Za miastem wojewódzkim;
+Po przekroczeniu granicy;
+
+(Wybierz odpowiednio do pory dnia)
+,,Dzień dobry / Dobry wieczór"
+,,Witamy w pociągu [Kategoria] [Nazwa] [Numer pociągu] ze stacji [Stacja początkowa] do stacji [Stacja Koncowa] przez stacje [Wymienic najwazniejsze stacje posrednie]."
+(Jesli pociag prowadzi dwie luib wiecej grup wagonów, to w powyszym fragmencie naley podać relacje zasadnicza, a nastepnie. dodać:)
+,,Pociąg prowadzi grupę / ghrupy wagonów do stacji [Stacja docelowa alternatywna]"
+,,Następna stacja: [Nastepna stacja]"
+
+(Jesli pociag opozniony to dodac:)
+,,Informujemy e w związku z [Wybrać z katalogu opoznien] pociag jest opozniony o [Liczba minut] minut. Przepraszamy za opoznienie. Osoby przesiadające się do innych pociągów prosimy oo zgłaszanie tego zamiaru druzynie konduktorskiej."
+
+,,W trosce o Państwa komfort i bezpieczeństwo, prosimy o zapoznanie się z informacjami zamieszczonymi w wagonach. Druyna konduktorska pozostaje do państwa dyspozycji w trakcjie całej podrózy. Przedział konduktorski znajduje się w wagonie numer [Numer wagonu z przedzialem sluzbowym]"
+
+(Jesli w pociagu znajduje sie strefa gastronomiczna, dodać:)
+,,Zapraszamy do skorzystania z oferty gastropnomicznej WARS, w wagonie numer [Numer wagonu restauracyjnego]/
+
+    (Jesli oferta dostępna jest w skroconej relacji, dodac:)
+    ,,Ofera gastronomiczna dostępna jest do stacji [Nazwa stacji oferta skrocona wars]"
+
+(Jesli w pociagu znajduje sie strefa gastronomiczna oraz sprawne automaty vendingowe, dodac:)
+,,Zapraszamy do skorzystania z oferty gastronomicznej Wars w wagpoonie numer [Numer wagonu restauracyjnego] opraz do zakupu napojow i przekasek w wagonie [wagon automat vendingowy]."
+
+(Jesli w pociagu nie ma strefy gastronomicznej, ale znajduja sie sprawne automaty wendingowe, dodac:)
+,,Zapraszamy do zakupu napojow i przekasek w automatach, w wagonie / wagonach nr [numer wagonu automat vendingowy]"
+
+(Jesli w wagonie nie ma strefy gastronomicznej, ale znajduje sie. wozek mini-bar, dodac)
+,,Zapraszamy do zakupu napojow i przekasek z wozka mini-bar. Oferta bedzie dostepna do stacji [Stacja koncowa oferta mini-bar]"
+
+(Jesli w pociagu wyjatkowo nie ma strefy gastronomicznej, ale znajduje sie wozek mini-bar, lub sprawne automaty vendingowe:)
+,,Informujemy, e w pociągu nie ma wagonu gastronomicznego, za co Państwa przeraszamy. Zakup napojow i przekasek jest mozliwy z wozka mini bar/ w automatach vendingowych znajdujacych sie w wagonie [Numer wagonu automaty vendiningowe]"
+
+(Jesli w pociagu wyjatkowo niue ma oferty gastronomicznej, mimo ze jakis jej rodzaj mial byc, nalezy dodac:)
+,,Informujemy, e w pociągu oferta gastronomiczna jest niedostepna, za co panstwa przepraszamy"
+
+
+#Powitalny-Skrócony
+
+Kiedy go uzywac? 
+Za miejscowoscia niewojewodzka
+
+,,Nastepna stacja [Nastepna stacja]"
+
+(Jesli pociag jest opozniony, dodac:)
+,,Informujemy, ze w zwiazku z [Wybrac z katalogu opoznien] pociag jest opozniony. o [liczba minut] minut. Osoby przesiadajace sie do innych pociagow prosimy o zglaszanie tego zamiaru druzynie konduktorskiej."
+
+(Jesli w pociagu znajduje sie strefa gastronomiczna, dodać:)
+,,Zapraszamy do skorzystania z oferty gastropnomicznej WARS, w wagonie numer [Numer wagonu restauracyjnego]/
+
+    (Jesli oferta dostępna jest w skroconej relacji, dodac:)
+    ,,Ofera gastronomiczna dostępna jest do stacji [Nazwa stacji oferta skrocona wars]"
+
+(Jesli w pociagu znajduje sie strefa gastronomiczna oraz sprawne automaty vendingowe, dodac:)
+,,Zapraszamy do skorzystania z oferty gastronomicznej Wars w wagpoonie numer [Numer wagonu restauracyjnego] opraz do zakupu napojow i przekasek w wagonie [wagon automat vendingowy]."
+
+(Jesli w pociagu nie ma strefy gastronomicznej, ale znajduja sie sprawne automaty wendingowe, dodac:)
+,,Zapraszamy do zakupu napojow i przekasek w automatach, w wagonie / wagonach nr [numer wagonu automat vendingowy]"
+
+(Jesli w wagonie nie ma strefy gastronomicznej, ale znajduje sie. wozek mini-bar, dodac)
+,,Zapraszamy do zakupu napojow i przekasek z wozka mini-bar. Oferta bedzie dostepna do stacji [Stacja koncowa oferta mini-bar]"
+
+(Jesli w pociagu wyjatkowo nie ma strefy gastronomicznej, ale znajduje sie wozek mini-bar, lub sprawne automaty vendingowe:)
+,,Informujemy, e w pociągu nie ma wagonu gastronomicznego, za co Państwa przeraszamy. Zakup napojow i przekasek jest mozliwy z wozka mini bar/ w automatach vendingowych znajdujacych sie w wagonie [Numer wagonu automaty vendiningowe]"
+
+(Jesli w pociagu wyjatkowo niue ma oferty gastronomicznej, mimo ze jakis jej rodzaj mial byc, nalezy dodac:)
+,,Informujemy, e w pociągu oferta gastronomiczna jest niedostepna, za co panstwa przepraszamy"
+
+#Piwitalno-Pozegnalny
+
+Kiedy go uzywac?
+Pomiedzy stacjami w miescie, gprzez ktore pociagi przejezdzaja tranzytem;
+Pomiedzy stacjami, miedzy ktorymi czas przejazdu wynosi mniej niz 7 minut.
+
+(Jesli w pociagu dostepna jest oferta gastronomiczna, dodac:)
+,,,Zapraszamy do skorzystania z oferty gastronomicznej"
+
+,,Zbliamy się do stacji [Nazwa najblizszej stacji]."
+
+(Jesli pociag jest opozniony o 5 lub wiecej minut, dodac:)
+,,Przepraszamy za opoznienie pociagu."
+
+(Jesli przewidywany czas postoju na stacji od przyjazdu do planowej godziny odjazdu wynosi. wiecej niz. 5 minut, nalezy. dodac:)
+,,Planowany odjazd pociągu o godzinie [Godzina odjazdu]:
+
+Osoby wysiadajace prosimy o zabranie swoich rzeczy oraz o zachowanie ostroznosci.
+,,Dziekujemy za podroz z PKP Intercity."
+
+    --Przesiadki--
+    (Jesli z stacji w pciagu 30 minut odjezdzaja pociagi lub zastepcza komuinikacja Autobusowa:)
+    ,,Na stacji mozna przesiasc sie do pociagow dalekobiznych, regionalnych lub podmiejskich".
+
+    (W przypadku ZKA:)
+    ,,oraz do Zastępczej Komuninikacji Autobuseowej do stacji [Nazwa stacji ZKA]."
+
+        --Lotnisko--
+        (Jesli ze stacji odjezdzaja pociagi na lotnisko:)
+        ,,Ze stacji [Nazwa najblizszej stacji] odjezdzaja pociagi w kierunku [Podac nazwe lotniska. zgodnie z wykazem]"
+
+,,Prosimy o zwrocenie uwagi na informacje stacyjne"
+
+(Jesli na danej stacji wagony beda odlaczane, dodac:)
+,,Przypominamy ze na stacji [Nazwa najblizszej stacji] pociag zostanie rozlaczony. Wagony z numerami [Podac kolejne numery wagonow tej grupy relacyjnej] kursuja do stacji [Stacja grupa relacyjna X]. Wagony z numerami [Wagony koniec biegu] kończą bieg. W trakcie przestawiania. wagonów prosimy o zachowanie szczególnej ostroznosci."
+
+#Pozegnalny
+
+Kiedy nalezy go wygloscic?
+Przed dojazdem do stacji / stacji koncowej:
+
+,Zbliamy się do stacji [Nazwa najblizszej stacji]."
+
+(Jesli pociag jest opozniony o 5 lub wiecej minut, dodac:)
+,,Przepraszamy za opoznienie pociagu."
+
+(Jesli przewidywany czas postoju na stacji od przyjazdu do planowej godziny odjazdu wynosi. wiecej niz. 5 minut, nalezy. dodac:)
+,,Planowany odjazd pociągu o godzinie [Godzina odjazdu]:
+
+Osoby wysiadajace prosimy o zabranie swoich rzeczy oraz o zachowanie ostroznosci.
+,,Dziekujemy za podroz z PKP Intercity."
+
+    --Przesiadki--
+    (Jesli z stacji w pciagu 30 minut odjezdzaja pociagi lub zastepcza komuinikacja Autobusowa:)
+    ,,Na stacji mozna przesiasc sie do pociagow dalekobiznych, regionalnych lub podmiejskich".
+
+    (W przypadku ZKA:)
+    ,,oraz do Zastępczej Komuninikacji Autobuseowej do stacji [Nazwa stacji ZKA]."
+
+        --Lotnisko--
+        (Jesli ze stacji odjezdzaja pociagi na lotnisko:)
+        ,,Ze stacji [Nazwa najblizszej stacji] odjezdzaja pociagi w kierunku [Podac nazwe lotniska. zgodnie z wykazem]"
+
+,,Prosimy o zwrocenie uwagi na informacje stacyjne"
+
+(Jesli na danej stacji wagony beda odlaczane, dodac:)
+,,Przypominamy ze na stacji [Nazwa najblizszej stacji] pociag zostanie rozlaczony. Wagony z numerami [Podac kolejne numery wagonow tej grupy relacyjnej] kursuja do stacji [Stacja grupa relacyjna X]. Wagony z numerami [Wagony koniec biegu] kończą bieg. W trakcie przestawiania. wagonów prosimy o zachowanie szczególnej ostroznosci."
+
+# Komunikaty dodatkowo zarzadzone
+
+A1. Jazda pociagiem opoznionym
+-Po odjezdzie z miejsca nieplanowanego postoju, w ktorym powstalo opoznienie;
+-Jesli opoznienie pociagu powstalo podczas jazdy;
+-Jesli opoznienie zmienilo sie o 5 lub wiecej minut:
+
+,,Informujemy ze w zwiazku z [wybrac z katalogu opoznien] pociag jest opozniony o [liczba minut] minut. Przepraszamy za opoznienie. Osoby przesiadajace sie. do innych pociagow prosimy o zgloszenioe tego zamiaru druzynie konduktorskiej. Przedzial konduktorski znajduje sie w wagonie numer [numer wagonu sluzbowy].
+
+(Komunikat ten nalezy, wyglosic, w pociagu ktory byl opozniony, a obecnie jedzie zgodnie z rozkladem jazdy:)
+,,Informujemy ze pociag jedzie zgodnie z rozkladem jazdy"
+
+A2. Wydluzony postoj pociagu na stacji handlowej
+
+-Komunikat nalezy wygloscic podczas postoju pociagu niezwlocznie, gdy zostalo potwierdzone przez dyzurnego ruchu opoznienie podjazdu o conajmniej 5 minut:
+,,Informujemy, ze w zwiazku [Wybrac z katalogu opoznien] pociag odjedzie z opoznieniem okolo [liczba minut] minuit. O zmianie opoznienia bedziemy informowac na biezaco. Przepraszamy za niedogodnosci. Osoby przesiadajace sie do innych pociagow prosimy o zgloszenie tego zamiaru do druzyny konduktorskiej. Przedzial konduktorski znajduje sie w wagonie numer [numer wagonu sluizbowego].
+
+A3. Zatrzymanie przed semaforem wjazdowym
+(Komunikat nalezy wyglosic, jesli po wygloszeniu komunikatu pozegnalnego lub powitalno-pozegnalnego  nastapilo zatrzymanie pociagu przed semaforem wjazdowym do stacji postoju handlowego:)
+,,Informujemy, ze nasz pociag wjedzie na stacje [nazwa stacji najblizszej handl;owej]. za okolo [liczba minut oczekiwania] minut. 
+
+(W przypadku jesli wprzy peronach danej stacji na odcjazd oczekuje inny. pociag na przesiadke, dodac:)
+,,Pociag [Numer pociagu] do stacji [Stacja koncowa przesiadka] przez stacje [Stacje przez przesiadka], planowo opdjezdzajacy o godzinie [godzina odjazdu przesiadka] oczekuje przy peronie [numer peronu].
+
+,,Ze wzgledu bezpieczenmstwa otwieranie idrzwi wejsciowych i opuszczanie pociagu jest zabronione."
+
+A4. Informacje dot. Skomunikowań
+(Odpowiedni komuinikat nalezy wyglosci w przypadku zebrania od podroznych informacji o przesiadkach, ktore zostaly potwierdzone przez Dyspozytora Zakladowego)
+,,Prosimy o uwagę. Pociag [Numer pociagu skomunikowanie] do stacji [stacja koncowa skomunikowanie] przez stacje [stacje przez skomunikowanie] bedzie. oczekiwał na Państwa na stacji [stacja oczekiwania]. Prosimy o zwrocenie uwagi na informacje stacyjne.(Ten komunikat nalezy wyglosic dwuktornie).
+
+(W przypadku odmowy skomuniukowania:)
+,,rosimy o uwagę. Pociag [Numer pociagu skomunikowanie] do stacji [stacja koncowa skomunikowanie] przez stacje [stacje przez skomunikowanie] nie bedzie oczekiwał na Państwa. Przepraszamy za niedogodnosci. Dodatkowych informacji udzieli Panstwu druzyna konduktorska. Przedzial konduktorski znajduje sie w wagonie [numer wagonu przedzial sluzbowy]. (Ten komunikat nalezy wyglosic podwojnie.)
+
+C1. Zatrzymanie czesci pociagu poza krawedzia. peronowa
+
+(Komunikat nalezy wyglosic ptuz po komunikacie poizegnalnym lub powitalno-pozegnalnym):
+,,Prosimy o uwagę! Informujemy, ze na stacji [Nazwa stacji krrotkie perony] ostatnie wagony w składzie poiciagu, oznaczone numerami [Numery wagonow poza krawedzia] zatrzymaja sie poza peronem. Podroznych wysiadajaych na tej stacji prosiomy o przejscie do wagonow num,er [numery wagonow przy krawedzi peronowej] znajdujacych sie blizej lokomotywy, z ktorych mozliwe bedzie bezpieczne opuszczenie pociagu. Przepraszamy za niedogodnosci i prosimy o zachowanie ostroznosci podczas wysiadania."
+
+C2. Postoj techniczny uwzględniony
+
+,,Informujemy ze obecny postoj techhniczny zostal uwzgledniony w rozkladzie jazdy i nie powinien spowodowac / zwiekszyc opoznienia. Ze wzgledow bezpieczenstwa, otwieranie drzwi wejsciowych i opuszczanie pociagu jest zabronione".
+
+C3. Sklad zastepczy zamiast EZT
+
+,,Informujemy, ze pociag zostal zestawiony dzis z wagonow klasycznych."
+(Jesli w wagonach znajduja sie oznaczenia miejsc zastepczych, dodac:)
+,,Prosimy o zwrocenie uwagi na informacje dotyczace wyznaczania miejsc zastepczych".
+(W przypadku gdy jazda miala odbywac sie jednostką EZT rodzaju ED250:)
+,,Rownoczesnie informujemy, ze moga panstwo ubiegac sie o rekompensate, w drodze reklamacji. Szczegolowe informacje dotyczace mozliwosci zlozenia reklamacji dostepne sa w przedsionkach wagonow i na stronie ww.intercity.pl"
+
+--Wykaz przesiadek na lotnisko--
+Lublin Głowny / Swidnik Miasto
+(Mozna przesiasc sie do pociagow odjezdzajacych w kierunku...) Portu Lotniczego Lublin.
+
+Warszawa Wschodnia / Warszawa Zachodnia
+Lotniska Chopina w Warszawie i Portu Lotniczego Warszawa-Modlin.
+
+Warszawa Gdanska
+Portu Lotniczego Warszawa-Modlin.
+
+Czestochowa / Gliwice /Katowice / Zawiercie
+Portu lotniczego Katowice-Pyrzowice
+
+Kraków Głowny
+Portun Lotniczego Krakow-Balice
+
+Rzeszow Glowny
+Portu Lotniczego Rzeszow Jasionka
+
+Gdansk Wrzeszcz / Gdynia GLowna
+Portu Lotniczego Gdańsk
+
+Olsztyn GłownyPortu Lotniczego Olsztyn-Mazury
+
+Szczecin Dąbie
+Portu Lotniczego Szczecin Goleniów

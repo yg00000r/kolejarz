@@ -21,9 +21,11 @@ import {
   fetchActualDuties, parseActualDuties,
   fetchMessages, parseMessages,
   fetchAccounts, parseAccounts,
+  fetchCrewOnTrip, parseCrewOnTrip,
   confirmAllocationHttp,
   portalHealthCheck,
   clearToken,
+  defaultPortalUser,
 } from './services/portal';
 
 dotenv.config();
@@ -42,6 +44,23 @@ const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL ?? 'http://57.128.246.232:3000
 
 // Ensure directories exist
 fs.mkdir(TEMPLATES_DIR, { recursive: true }).catch(() => {});
+
+type TenantPortal = { tenantId: number; username: string; token: string };
+
+async function portalSessionForTenant(tenantId: number): Promise<TenantPortal> {
+  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+  const password = decrypt(tenant.portalPasswordEncrypted);
+  const token = await portalLogin(tenant.portalUsername, password);
+  return { tenantId, username: tenant.portalUsername, token };
+}
+
+function onPortalAuthError(e: unknown, username?: string): string {
+  const msg = String(e);
+  if (msg.includes('auth expired') || msg.includes('login failed')) {
+    clearToken(username);
+  }
+  return msg;
+}
 
 // ── Sluzby dictionary ──────────────────────────────────
 type SluzbaDef = { opis: string; skrot: string; typ: string };
@@ -386,9 +405,9 @@ app.get('/monitoring/vps', requireAuth, async (_req, res) => {
 
 let lastSyncAt: string | null = null;
 
-async function syncMonth(year: number, month: number): Promise<number> {
-  const token = await portalLogin();
-  const html = await fetchDutyTable(token, year, month);
+async function syncMonth(tenantId: number, year: number, month: number): Promise<number> {
+  const { username, token } = await portalSessionForTenant(tenantId);
+  const html = await fetchDutyTable(token, year, month, username);
   const parsed = parseDutyTable(html);
 
   if (parsed.length === 0) {
@@ -398,8 +417,8 @@ async function syncMonth(year: number, month: number): Promise<number> {
   let upserted = 0;
   for (const s of parsed) {
     await prisma.shift.upsert({
-      where: { date: s.date },
-      create: s,
+      where: { tenantId_date: { tenantId, date: s.date } },
+      create: { ...s, tenantId },
       update: {
         shiftCode: s.shiftCode,
         startTime: s.startTime,
@@ -420,23 +439,26 @@ async function runScheduledSync(): Promise<void> {
   const now = new Date();
   const m = now.getMonth() + 1;
   const y = now.getFullYear();
-
-  console.log(`[Cron] Auto-sync started at ${now.toISOString()}`);
-
-  try {
-    const count = await syncMonth(y, m);
-    console.log(`[Cron] Synced ${count} shifts for ${y}-${String(m).padStart(2, '0')}`);
-  } catch (e) {
-    console.error('[Cron] Failed to sync current month:', e);
-  }
-
   const nextM = m === 12 ? 1 : m + 1;
   const nextY = m === 12 ? y + 1 : y;
-  try {
-    const count = await syncMonth(nextY, nextM);
-    console.log(`[Cron] Synced ${count} shifts for ${nextY}-${String(nextM).padStart(2, '0')}`);
-  } catch (e) {
-    console.error('[Cron] Failed to sync next month:', e);
+
+  const tenants = await prisma.tenant.findMany({ orderBy: { id: 'asc' } });
+  if (tenants.length === 0) {
+    console.warn('[Cron] No tenants registered — skipping sync');
+    return;
+  }
+
+  console.log(`[Cron] Auto-sync started at ${now.toISOString()} for ${tenants.length} tenant(s)`);
+
+  for (const tenant of tenants) {
+    for (const [year, month] of [[y, m], [nextY, nextM]] as const) {
+      try {
+        const count = await syncMonth(tenant.id, year, month);
+        console.log(`[Cron] Synced ${count} shifts for ${tenant.portalUsername} ${year}-${String(month).padStart(2, '0')}`);
+      } catch (e) {
+        console.error(`[Cron] Failed for ${tenant.portalUsername} ${year}-${String(month).padStart(2, '0')}:`, e);
+      }
+    }
   }
 
   lastSyncAt = new Date().toISOString();
@@ -447,10 +469,11 @@ setTimeout(runScheduledSync, 30_000);
 
 // ── Manual sync trigger ────────────────────────────────
 // POST /portal/sync — re-sync current month on demand (e.g. after manual portal confirmation)
-app.post('/portal/sync', requireAuth, async (_req, res) => {
+app.post('/portal/sync', requireAuth, async (req: AuthRequest, res) => {
   try {
+    const tenantId = req.tenantId!;
     const now = new Date();
-    const count = await syncMonth(now.getFullYear(), now.getMonth() + 1);
+    const count = await syncMonth(tenantId, now.getFullYear(), now.getMonth() + 1);
     lastSyncAt = new Date().toISOString();
     return res.json({ success: true, synced: count, syncedAt: lastSyncAt });
   } catch (e) {
@@ -586,11 +609,12 @@ app.get('/shifts/sluzby', requireAuth, (_req, res) => {
   res.json(sluzbyDict);
 });
 
-app.get('/shifts/next', requireAuth, async (_req, res) => {
+app.get('/shifts/next', requireAuth, async (req: AuthRequest, res) => {
   try {
+    const tenantId = req.tenantId!;
     const today = new Date().toISOString().slice(0, 10);
     const rows = await prisma.shift.findMany({
-      where: { date: { gte: today } },
+      where: { tenantId, date: { gte: today } },
       orderBy: { date: 'asc' },
       take: 10,
     });
@@ -621,14 +645,15 @@ app.get('/shifts/next', requireAuth, async (_req, res) => {
  * The backend logs into IVU portal, fetches the schedule HTML, parses it and
  * upserts shifts into the database. Returns count of upserted rows.
  */
-app.post('/shifts/sync', requireAuth, async (req, res) => {
+app.post('/shifts/sync', requireAuth, async (req: AuthRequest, res) => {
   try {
+    const tenantId = req.tenantId!;
     const { month, year } = (req.body ?? {}) as { month?: number; year?: number };
     const now = new Date();
 
     // Jeśli podano konkretny miesiąc — syncuj tylko ten
     if (month && year) {
-      const count = await syncMonth(year, month);
+      const count = await syncMonth(tenantId, year, month);
       lastSyncAt = new Date().toISOString();
       return res.json({ count, month, year });
     }
@@ -641,19 +666,18 @@ app.post('/shifts/sync', requireAuth, async (req, res) => {
     ];
     for (const { y, m } of pairs) {
       try {
-        const count = await syncMonth(y, m);
+        const count = await syncMonth(tenantId, y, m);
         results.push({ month: m, year: y, count });
-        console.log(`[Sync] Upserted ${count} shifts for ${y}-${String(m).padStart(2, '0')}`);
+        console.log(`[Sync] Upserted ${count} shifts for tenant ${tenantId} ${y}-${String(m).padStart(2, '0')}`);
       } catch (e) {
-        console.warn(`[Sync] Failed for ${y}-${String(m).padStart(2, '0')}: ${e}`);
+        console.warn(`[Sync] Failed for tenant ${tenantId} ${y}-${String(m).padStart(2, '0')}: ${e}`);
       }
     }
     lastSyncAt = new Date().toISOString();
     const totalCount = results.reduce((s, r) => s + r.count, 0);
     return res.json({ count: totalCount, months: results });
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
+    const msg = onPortalAuthError(e, req.portalUsername);
     return res.status(502).json({ error: 'Sync error', detail: msg });
   }
 });
@@ -664,7 +688,8 @@ app.post('/shifts/sync', requireAuth, async (req, res) => {
  * Does NOT hit the portal — use /shifts/sync to refresh data from portal.
  * Each shift includes resolved service definition (opis, skrot, typ) from sluzby.json.
  */
-app.get('/shifts', requireAuth, async (req, res) => {
+app.get('/shifts', requireAuth, async (req: AuthRequest, res) => {
+  const tenantId = req.tenantId!;
   const { month, year } = req.query as { month?: string; year?: string };
   if (!month || !year) return res.status(400).json({ error: 'month and year required' });
   const m = String(month).padStart(2, '0');
@@ -672,7 +697,7 @@ app.get('/shifts', requireAuth, async (req, res) => {
   const to = `${year}-${m}-31`;
   try {
     const rows = await prisma.shift.findMany({
-      where: { date: { gte: from, lte: to } },
+      where: { tenantId, date: { gte: from, lte: to } },
       orderBy: { date: 'asc' },
     });
     const shifts = rows.map((r) => {
@@ -695,20 +720,18 @@ app.get('/shifts', requireAuth, async (req, res) => {
 });
 
 // ── Actual duties (Ist-Dienst) ────────────────────────
-app.get('/shifts/actual', requireAuth, async (req, res) => {
+app.get('/shifts/actual', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { month, year } = req.query as { month?: string; year?: string };
     const now = new Date();
     const m = Number(month) || (now.getMonth() + 1);
     const y = Number(year) || now.getFullYear();
-    const token = await portalLogin();
-    const html = await fetchActualDuties(token, y, m);
+    const { username, token } = await portalSessionForTenant(req.tenantId!);
+    const html = await fetchActualDuties(token, y, m, username);
     const duties = parseActualDuties(html);
     return res.json({ month: m, year: y, duties });
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
-    return res.status(502).json({ error: 'Portal error', detail: msg });
+    return res.status(502).json({ error: 'Portal error', detail: onPortalAuthError(e, req.portalUsername) });
   }
 });
 
@@ -719,52 +742,90 @@ app.get('/shifts/actual', requireAuth, async (req, res) => {
  * Returns shift components (trip legs), timecard status, and confirmation URLs.
  * Clears the cached portal token on auth errors so the next call re-authenticates.
  */
-app.get('/shifts/:date/details', requireAuth, async (req, res) => {
+app.get('/shifts/:date/details', requireAuth, async (req: AuthRequest, res) => {
   try {
     const date = req.params.date as string;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
     }
-    const token = await portalLogin();
-    const html = await fetchDutyDetails(token, date);
+    const { username, token } = await portalSessionForTenant(req.tenantId!);
+    const html = await fetchDutyDetails(token, date, username);
     const details = parseDutyDetails(html);
     if (!details) {
       return res.json({ date, shiftCode: null, components: [] });
     }
     return res.json(details);
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
-    return res.status(502).json({ error: 'Portal error', detail: msg });
+    return res.status(502).json({ error: 'Portal error', detail: onPortalAuthError(e, req.portalUsername) });
   }
 });
 
 // ── Portal messages ───────────────────────────────────
-app.get('/portal/messages', requireAuth, async (req, res) => {
+app.get('/portal/messages', requireAuth, async (req: AuthRequest, res) => {
   try {
     const page = Number(req.query.page) || 1;
-    const token = await portalLogin();
-    const html = await fetchMessages(token, page);
+    const { username, token } = await portalSessionForTenant(req.tenantId!);
+    const html = await fetchMessages(token, page, username);
     const result = parseMessages(html);
     return res.json({ page, ...result });
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
-    return res.status(502).json({ error: 'Portal error', detail: msg });
+    return res.status(502).json({ error: 'Portal error', detail: onPortalAuthError(e, req.portalUsername) });
   }
 });
 
 // ── Portal accounts (balances) ────────────────────────
-app.get('/portal/accounts', requireAuth, async (_req, res) => {
+app.get('/portal/accounts', requireAuth, async (req: AuthRequest, res) => {
   try {
-    const token = await portalLogin();
-    const html = await fetchAccounts(token);
+    const { username, token } = await portalSessionForTenant(req.tenantId!);
+    const html = await fetchAccounts(token, username);
     const accounts = parseAccounts(html);
     return res.json({ accounts });
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
-    return res.status(502).json({ error: 'Portal error', detail: msg });
+    return res.status(502).json({ error: 'Portal error', detail: onPortalAuthError(e, req.portalUsername) });
+  }
+});
+
+// ── Crew on trip (załoga pociągu) ─────────────────────
+
+/** Easter egg: pociąg „69" zwraca mockową załogę z Dariuszem Porębą (KP). */
+const MOCK_CREW_69 = {
+  tripNumber: '69',
+  fromStation: 'Wrocław Główny',
+  toStation: 'Warszawa Centralna',
+  startTime: '04:20',
+  endTime: '08:08',
+  members: [
+    { name: 'DARIUSZ PORĘBA', crewType: 'KP', role: 'Kierownik pociągu', phone: '600100200',
+      segment: { startTime: '04:20', startStation: 'WR_GL', endTime: '08:08', endStation: 'W-WA_C' } },
+    { name: 'ANNA NOWAK', crewType: 'K', role: 'Konduktor', phone: '600300400',
+      segment: { startTime: '04:20', startStation: 'WR_GL', endTime: '08:08', endStation: 'W-WA_C' } },
+    { name: 'PIOTR ZIELIŃSKI', crewType: 'M', role: 'Maszynista', phone: '600500600',
+      segment: { startTime: '04:20', startStation: 'WR_GL', endTime: '08:08', endStation: 'W-WA_C' } },
+  ],
+};
+
+app.get('/crew', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const date = String(req.query.date ?? '');
+    const trip = String(req.query.trip ?? '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+    }
+    if (!trip) {
+      return res.status(400).json({ error: 'trip (numer pociągu) is required' });
+    }
+    if (trip === '69') {
+      return res.json(MOCK_CREW_69);
+    }
+    const { username, token } = await portalSessionForTenant(req.tenantId!);
+    const html = await fetchCrewOnTrip(token, date, trip, username);
+    const crew = parseCrewOnTrip(html);
+    if (!crew) {
+      return res.json({ tripNumber: trip, fromStation: null, toStation: null, startTime: null, endTime: null, members: [], notFound: true });
+    }
+    return res.json(crew);
+  } catch (e) {
+    return res.status(502).json({ error: 'Portal error', detail: onPortalAuthError(e, req.portalUsername) });
   }
 });
 
@@ -775,8 +836,8 @@ app.get('/debug/duty-table', async (req, res) => {
     const now = new Date();
     const m = Number(month) || (now.getMonth() + 1);
     const y = Number(year) || now.getFullYear();
-    const token = await portalLogin();
-    const html = await fetchDutyTable(token, y, m);
+    const token = await portalLogin(defaultPortalUser());
+    const html = await fetchDutyTable(token, y, m, defaultPortalUser());
     const parsed = parseDutyTable(html);
     const $ = (await import('cheerio')).load(html);
     const tdCount = $('td.day.list-item').length;
@@ -799,8 +860,9 @@ app.get('/debug/duty-table', async (req, res) => {
 app.get('/debug/confirm-attrs/:date', async (req, res) => {
   try {
     const { date } = req.params;
-    const token = await portalLogin();
-    const html = await fetchDutyDetails(token, date);
+    const sessionKey = defaultPortalUser();
+    const token = await portalLogin(sessionKey);
+    const html = await fetchDutyDetails(token, date, sessionKey);
     const cheerioLib = await import('cheerio');
     const $ = cheerioLib.load(html);
     const alloc = $('div.allocation').not('.hidden').first();
@@ -845,38 +907,39 @@ app.get('/portal/health', async (_req, res) => {
 // POST /portal/confirm-timecards-bulk
 // Body: { dates: string[], delayMs?: number }
 // Zwraca: { results: Array<{ date: string, success: boolean, message?: string }> }
-app.post('/portal/confirm-timecards-bulk', requireAuth, async (req, res) => {
+app.post('/portal/confirm-timecards-bulk', requireAuth, async (req: AuthRequest, res) => {
   const { dates, delayMs = 8000 } = req.body as { dates?: string[]; delayMs?: number };
   if (!Array.isArray(dates) || dates.length === 0) {
     return res.status(400).json({ error: 'dates[] is required' });
   }
 
+  const tenantId = req.tenantId!;
+  const { username, token } = await portalSessionForTenant(tenantId);
   const results: Array<{ date: string; success: boolean; message?: string; debug?: object }> = [];
-  const token = await portalLogin();
 
   for (const date of dates) {
     try {
-      const html = await fetchDutyDetails(token, date);
+      const html = await fetchDutyDetails(token, date, username);
       const details = parseDutyDetails(html);
       if (!details || !details.allocationId) {
         results.push({ date, success: false, message: details ? 'Brak allocationId w karcie' : 'Nie znaleziono służby' });
       } else if (!details.needsConfirmation) {
         results.push({ date, success: false, message: 'Karta nie jest gotowa do potwierdzenia przez API — potwierdź ręcznie na portalu.intercity.pl i użyj przycisku Odśwież' });
       } else {
-        const httpResult = await confirmAllocationHttp(token, details.allocationId, details.employeeId);
+        const httpResult = await confirmAllocationHttp(token, details.allocationId, details.employeeId, username);
         console.log(`[BulkConfirm] ${date}: status=${httpResult.status} body=${httpResult.body.slice(0, 200)}`);
         if (httpResult.success) {
-          await prisma.shift.updateMany({ where: { date }, data: { timecardStatus: 'zatwierdzona' } });
+          await prisma.shift.updateMany({ where: { tenantId, date }, data: { timecardStatus: 'zatwierdzona' } });
           results.push({ date, success: true, message: 'OK (HTTP)', debug: { status: httpResult.status, body: httpResult.body.slice(0, 200), json: httpResult.json } });
         } else {
           // Playwright fallback: browser context provides bm_sv Akamai cookie needed for confirmation
           console.log(`[BulkConfirm] ${date}: HTTP failed, trying Playwright...`);
           try {
             const { confirmTimecardPlaywright } = await import('./services/portal-browser');
-            const pwResult = await confirmTimecardPlaywright(date, details.allocationId);
+            const pwResult = await confirmTimecardPlaywright(date, details.allocationId, token);
             console.log(`[BulkConfirm] ${date}: Playwright result: ${JSON.stringify(pwResult)}`);
             if (pwResult.success) {
-              await prisma.shift.updateMany({ where: { date }, data: { timecardStatus: 'zatwierdzona' } });
+              await prisma.shift.updateMany({ where: { tenantId, date }, data: { timecardStatus: 'zatwierdzona' } });
               results.push({ date, success: true, message: pwResult.message });
             } else {
               results.push({ date, success: false, message: pwResult.message });
@@ -899,15 +962,16 @@ app.post('/portal/confirm-timecards-bulk', requireAuth, async (req, res) => {
 });
 
 // ── Portal confirm timecard ───────────────────────────
-app.post('/portal/confirm-timecard', requireAuth, async (req, res) => {
+app.post('/portal/confirm-timecard', requireAuth, async (req: AuthRequest, res) => {
   try {
     const { date } = req.body as { date?: string };
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ error: 'date (YYYY-MM-DD) is required' });
     }
 
-    const token = await portalLogin();
-    const html = await fetchDutyDetails(token, date);
+    const tenantId = req.tenantId!;
+    const { username, token } = await portalSessionForTenant(tenantId);
+    const html = await fetchDutyDetails(token, date, username);
     const details = parseDutyDetails(html);
 
     if (!details) {
@@ -926,12 +990,12 @@ app.post('/portal/confirm-timecard', requireAuth, async (req, res) => {
 
     // Attempt 1: HTTP POST (fast, may be blocked by Akamai)
     console.log(`[Confirm] Attempting HTTP confirm for ${date} (allocation: ${allocationId}, employee: ${details.employeeId})`);
-    const httpResult = await confirmAllocationHttp(token, allocationId, details.employeeId);
+    const httpResult = await confirmAllocationHttp(token, allocationId, details.employeeId, username);
     console.log(`[Confirm] HTTP result for ${date}:`, JSON.stringify({ success: httpResult.success, status: httpResult.status, body: httpResult.body.slice(0, 300) }));
 
     if (httpResult.success) {
       await prisma.shift.updateMany({
-        where: { date },
+        where: { tenantId, date },
         data: { timecardStatus: 'zatwierdzona' },
       });
       return res.json({ success: true, method: 'http', message: `Confirmed for ${date}`, date });
@@ -941,11 +1005,11 @@ app.post('/portal/confirm-timecard', requireAuth, async (req, res) => {
     console.log(`[Confirm] HTTP failed (${httpResult.status}), trying Playwright...`);
     try {
       const { confirmTimecardPlaywright } = await import('./services/portal-browser');
-      const pwResult = await confirmTimecardPlaywright(date, allocationId);
+      const pwResult = await confirmTimecardPlaywright(date, allocationId, token);
 
       if (pwResult.success) {
         await prisma.shift.updateMany({
-          where: { date },
+          where: { tenantId, date },
           data: { timecardStatus: 'zatwierdzona' },
         });
         return res.json({ success: true, method: 'playwright', message: pwResult.message, date });
@@ -961,9 +1025,7 @@ app.post('/portal/confirm-timecard', requireAuth, async (req, res) => {
       });
     }
   } catch (e) {
-    const msg = String(e);
-    if (msg.includes('auth expired') || msg.includes('login failed')) clearToken();
-    return res.status(502).json({ error: 'Confirmation failed', detail: msg });
+    return res.status(502).json({ error: 'Confirmation failed', detail: onPortalAuthError(e, req.portalUsername) });
   }
 });
 

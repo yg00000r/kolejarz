@@ -14,7 +14,7 @@ import {
 import { BASE_URL } from '../../../constants/api';
 import { Colors } from '../../../constants/theme';
 import { trainBadgeLabel, trainBadgeStyle } from '../../../constants/trainBadge';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ const FAVOURITE_STATIONS: Station[] = [
 
 export default function StationScreen() {
   const { isDark } = useTheme();
-  const colors = isDark ? Colors.dark : Colors.light;
+  const colors = useColors();
   const router = useRouter();
 
   const [tab, setTab] = useState<TabType>('departure');
