@@ -1,6 +1,20 @@
 # Kolejarz — Tasks
 
-> Format: `- [x]` = zrobione, `- [ ]` = do zrobienia, `- [~]` = w trakcie
+> Format: `- [x]` zrobione · `- [ ]` do zrobienia · `- [~]` w trakcie / częściowo
+>
+> **Zweryfikowano automatycznie:** 2026-08-13 (cloud agent) — `npx tsc --noEmit` w obu projektach, `npx prisma generate`, przegląd kodu backendu/frontend względem tego, co ten plik wcześniej deklarował jako zrobione. Punkty oznaczone **[KOREKTA]** zostały poprawione, bo nie zgadzały się ze stanem repo.
+
+---
+
+## Stan repo w skrócie
+
+| Co | Stan |
+|---|---|
+| Branch główny | `main` |
+| Branch roboczy Android | `cursor/android-port-0f40` — zawiera **tylko** helper do transferu sekretów (`scripts/pack-local-for-windows.sh`), **bez** faktycznego portu na Androida |
+| Backend `tsc --noEmit` | ✅ OK (wymaga wcześniejszego `npx prisma generate` — bez tego 2 błędy „Cannot find module './generated/prisma/client'") |
+| Frontend `tsc --noEmit` | ❌ 1 błąd — `app/(app)/index.tsx:129`, `PressScale` nie przyjmuje propa `accessibilityLabel` w swoim typie `Props` |
+| `react-native-reanimated` / `lottie-react-native` | **Nie są zainstalowane** (brak w `package.json` i w całej historii gita) — patrz sekcja UI/UX poniżej |
 
 ---
 
@@ -21,6 +35,7 @@
 | Zestawienia składów | `work/dodatki.tsx` |
 | Kontrolki szlaków | `work/routes.tsx` |
 | Komunikaty radiowe | `work/messages/` |
+| Załoga w trasie (Crew on Trip) | `work/crew.tsx` |
 
 ### Monitorowanie
 | Sub-moduł | Plik |
@@ -29,128 +44,100 @@
 
 ---
 
-## Na dzisiaj (2026-06-20)
+## Port na Androida (Windows + Pixel 9a)
 
-### 1. Panel załogi (Crew on Trip) ✅
-- [x] `scraper/recon_crew.py` — endpoint to `_-crew-on-trip-table?beginDate=...&tripNumber=...&sync=true` (GET, NIE blokowany przez Akamai; param daty = `beginDate` nie `date`). Struktura w `PORTAL_DISCOVERY.md` §9
-- [x] Backend: `fetchCrewOnTrip` + `parseCrewOnTrip` w `portal.ts`, typy `CrewMember[]` / `CrewOnTrip` (rola, imię, telefon, odcinek). Zwalidowane na realnym HTML
-- [x] Backend: endpoint `GET /crew?date=YYYY-MM-DD&trip=XXXX` w `index.ts`
-- [x] Frontend: ekran `work/crew.tsx` (stepper daty + numer, lista załogi z rolami/odcinkami/telefonami), kafelek w `work/index.tsx`, `fetchCrewOnTrip` w `services/work.ts`, trasa w `work/_layout.tsx`
+> **[KOREKTA]** Wcześniejszy plan „`git checkout android` + `git pull`" jest nieaktualny — branch `android` **nigdy nie istniał** w tym repo (zdalnie jest tylko `main`). Roboczym branchem jest `cursor/android-port-0f40`.
 
-### 2. Powiadomienia (bez płatnego Apple Developer)
-- [x] `aps-environment` usunięte z `ios/Kolejarz/Kolejarz.entitlements` (puste `<dict/>`)
-- [x] `expo-notifications` poza `plugins` w `app.json` → prebuild nie dodaje entitlementu push (lokalne działają bez niego)
-- [x] `services/notifications.ts` — lokalne: `scheduleTimecardReminder`, `scheduleShiftAlarm`, `configureNotifications` (kanał „Asystent", handler foreground); wpięte w `app/_layout.tsx`
-- [x] FCM zbadane → **niemożliwe na iOS bez płatnego Apple Developer**: iOS push zawsze przez APNs (gated za $99/rok), FCM to nakładka na APNs. Jedyny darmowy push na iOS = Web Push/PWA (nie dotyczy apki natywnej). Decyzja: na iOS lokalne; FCM ew. później dla Androida.
-- [x] Ekran ustawień powiadomień w `settings/index.tsx` (toggle: alarm przed służbą + wyprzedzenie 30/60/120 min, przypomnienie o karcie), hook `useNotificationSetup` (AsyncStorage + reschedule z grafiku), kanał „Asystent"
-
-### 3. Zmiany UI (Personal Team)
-> ℹ️ `react-native-reanimated`, `expo-linear-gradient`, `lottie-react-native` NIE są zainstalowane. Animacje robione na core `Animated` (jak `FadeSlideIn`/`PressScale`), bez nowych zależności natywnych → OTA-friendly. Zadania zależne od reanimated/lottie wymagają decyzji o instalacji (= nowy build natywny).
-- [x] `components/Skeleton.tsx` z shimmer (core `Animated` — ruchomy pasek, bez gradientu) → `Skeleton`, `SkeletonRow`, `SkeletonList`; wpięte w accounts, portal-messages, schedule
-- [x] Pull-to-refresh (`RefreshControl`) w `accounts.tsx`, `portal-messages.tsx` (`schedule.tsx` miał już wcześniej)
-- [x] `services/haptics.ts` — helper `haptic(type)` (light/medium/heavy/selection/success/warning/error); crew.tsx/duty-details już mają bogaty feedback
-- [x] **Responsywny layout** — `fluidHorizontalPadding` (mniejsze marginesy 12–20 px wg szerokości), `maxContentWidth` tylko na tabletach (telefony wypełniają szerokość), `tileWidth` wyliczany (koniec martwych pasów po `47%`), kolumny 2/3 wg szerokości; `constants/layout.ts` + `useAppLayout.ts` + `Screen.tsx`
-- [x] **Praca: przełącznik widoków** — kompaktowy (lista modułów) / normalny (grid), zapis w AsyncStorage, ikona w nagłówku
-- [x] Animacje przejść ekranów w `app/(app)/_layout.tsx` (`slide_from_right`, 260 ms, gesture back)
-- [x] **reanimated 4.1.1 + lottie 7.3.1** zainstalowane (`npx expo install`), `babel.config.js` (babel-preset-expo → worklets plugin), Metro `-c`, bundle zweryfikowany (HTTP 200, 13 MB)
-- [x] **accentColor** — `useColors()` w `ThemeContext`, migracja **26 ekranów** z `Colors.dark/light`, picker 6 kolorów + zapis AsyncStorage; Paper `primary` też = akcent
-- [x] **Fluid typography** — skala tekstu S/M/L w ustawieniach (`textScaleFactor` w `useAppTheme`/`useAppLayout`), łączona z systemowym Dynamic Type (`PixelRatio.getFontScale()`)
-- [x] State-driven animations — `AnimatedEmptyState` (reanimated `useSharedValue`+`withRepeat`+`withTiming`, pulsująca ikona) w pustych stanach (konta, wiadomości)
-- [x] `components/LottieState.tsx` — wrapper `lottie-react-native` gotowy na JSON w `assets/lottie/`; działające puste stany dostarczone przez `AnimatedEmptyState` (bez assetów)
-- [~] Shared element / hero transitions — `sharedTransitionTag` NIEDOSTĘPNY w reanimated 4.1.1 (wymaga ≥4.2.0 + feature flag + New Arch + screens ≥4.16, niewspierane w Expo Go). Zamiast tego: `entering={FadeInDown}` (hero-like entrances)
-
-### 3B. Live Activities / Dynamic Island
-- [ ] ODROCZONE — wymaga płatnego Apple Developer (ActivityKit = `.appex`, niemożliwe na Personal Team). Plan w `.cursor/plans/plan_na_dzisiaj`.
-
-### 4–5. Git i Android
-- [ ] Commit zmian iOS na `main`
-- [ ] `git checkout android` + `git pull`, weryfikacja różnic względem main
+- [x] Branch `cursor/android-port-0f40` utworzony i wypchnięty na origin
+- [x] `scripts/pack-local-for-windows.sh` — pakuje `.local-credentials/`, `.env*`, `dev.db` do zipa z hasłem, do transferu Mac → Windows przez LocalSend
+- [x] `app.json` — sekcja `android` już skonfigurowana: `package: com.ygor.kolejarz`, adaptive icon (foreground/background/monochrome — assety obecne w `assets/`), permissions biometrii
+- [ ] Transfer: `git clone`/`git pull` na Windows (kod) + rozpakowanie zipa sekretów (LocalSend)
+- [ ] `npm install` w `mind-app` i `mind-backend` na Windows
+- [ ] Konfiguracja sieciowa (Tailscale) Windows ↔ Mac/VPS
 - [ ] `npx expo run:android --device` na Pixel 9a
-- [ ] Bugtest OOTB na Androidzie: rejestracja → sync grafiku → wyszukanie pociągu PLK; nowe wpisy w `known-bugs.md` (KB-013+)
+- [ ] Bugtest OOTB na Androidzie: rejestracja → sync grafiku → wyszukanie pociągu PLK → nowe wpisy w `known-bugs.md` (KB-013+)
+- [ ] Drobny porządek: `app.json → android.permissions` ma zduplikowane wpisy `USE_BIOMETRIC` / `USE_FINGERPRINT` (każdy 2×) — do wyczyszczenia przy najbliższej edycji
 
 ---
 
-## Faza 1: Audyt i rebranding ✅
+## Powiadomienia lokalne (bez płatnego Apple Developer) ✅
 
-- [x] Usunięcie dead code backendu (expenses, routines, notes, mdnotes, NOTES_DIR)
-- [x] Usunięcie martwych modeli Prisma (Expense, Routine, Note)
-- [x] Deduplikacja PLK_KEY — wyłącznie przez `process.env.PLK_API_KEY`
-- [x] Usunięcie `mind-backend/dist/`, `mind-app/trash/`
-- [x] Usunięcie zagnieżdżonego `.git` w `mind-app/` (monorepo)
-- [x] JSDoc dla `portal.ts` (login, fetchDutyTable, parseDutyTable, deprecated auto-password)
-- [x] JSDoc dla kluczowych endpointów w `index.ts` (`/shifts/sync`, `GET /shifts`, `/shifts/:date/details`)
-- [x] JSDoc dla `services/work.ts` (syncShifts, fetchShifts, fetchDutyDetails)
-- [x] Rebranding konfiguracji: `package.json`, `app.json` (slug, bundleIdentifier `com.ygor.kolejarz`), `docker-compose.yml`, `altstoreSource.ts`
-- [x] Nagłówki plików `.md` zaktualizowane do „Kolejarz"
-
-> **Uwaga:** Foldery `mind-app/` i `mind-backend/` zachowują obecne nazwy na dysku (zmiana folderów wymagałaby migracji repo). Konfiguracje i dokumentacja używają nazwy Kolejarz.
+- [x] `aps-environment` usunięte z `ios/Kolejarz/Kolejarz.entitlements`
+- [x] `expo-notifications` poza `plugins` w `app.json` → prebuild nie dodaje entitlementu push
+- [x] `services/notifications.ts` — `scheduleShiftAlarm`, `scheduleTimecardReminder`-owy flow, `configureNotifications` (kanał „Asystent", handler foreground), `cancelByType`/`cancelAllAssistantNotifications`
+- [x] FCM zbadane → **niemożliwe na iOS bez płatnego Apple Developer** (APNs zawsze wymagane). Na iOS: lokalne. FCM ew. do rozważenia na Androida, gdzie nie jest blokowany.
+- [x] Ekran ustawień powiadomień w `settings/index.tsx`, hook `useNotificationSetup` (AsyncStorage + reschedule z grafiku)
+- [x] Dodatkowo: `services/stationNotifications.ts` — powiadomienia stacyjne (−5 min od rozkładu) w module „Pilnowanie" (`work/messages/watch.tsx`)
 
 ---
 
-## Faza 2: Bezpieczeństwo repo ✅
+## UI / UX (Personal Team)
 
-- [x] `.gitignore` — dodano klucze (`id_rsa`, `*.key`, `*.pem`, `*.p12`), `dist/`, `dev.db`, `.local-credentials/`
-- [x] `.env.example` dla backendu — zmienne dla maintainera VPS, bez `PORTAL_USER/PASSWORD`
-- [x] `.env.example` dla frontendu — opcjonalny, z informacją że nie jest wymagany
-- [x] `readme.md` — usunięto hasła, stare IP, Grażyna/sync_grafik.py, moduły Life OS
-- [x] `CONTRIBUTING.md` — usunięto `sshpass`, stare IP; dodano Git workflow (gałęzie, commity, zasady)
-- [x] `API.md` — IP zastąpione placeholderem `<VPS_IP>`
-- [x] `SETUP.md` — usunięto prawdziwy klucz PLK, KOLEJARZ_DB_PATH, Telegram ID
-- [x] `scraper/PORTAL_DISCOVERY.md` — zredagowane PII (username, employee ID, hasła przykładowe)
-- [x] `docs/ALTSTORE-SOURCE.md` — **usunięty** (nieaktywna domena)
-- [x] `docs/AGENT-SSH-VPS.md` — przeniesiony do `.local-credentials/AGENT-SSH-VPS.md` (gitignored); stub w `docs/`
-- [x] Git workflow opisany w `CONTRIBUTING.md`
+> ℹ️ Animacje działają na core `Animated` z React Native (`FadeSlideIn`, `PressScale`, `AnimatedEmptyState`), **nie** na `react-native-reanimated` — potwierdzone w kodzie.
 
----
-
-## Faza 3: Multi-tenant i OOTB onboarding ✅
-
-- [x] Model Prisma `Tenant` (`id`, `portalUsername`, `portalPasswordEncrypted`, `createdAt`)
-- [x] Model Prisma `AppSession` (`token`, `tenantId`, `expiresAt`)
-- [x] `Shift.tenantId` — opcjonalne powiązanie z tenantym
-- [x] `src/crypto.ts` — szyfrowanie AES-256-GCM haseł portalu (`encrypt`, `decrypt`)
-- [x] `src/authMiddleware.ts` — Bearer token middleware (`requireAuth`, `AuthRequest`)
-- [x] `POST /auth/register` — jedna próba logowania IVU, zapis szyfrowanego hasła w Tenant, sessionToken (30 dni), walidator wzorca MiesiącRok
-- [x] `GET /auth/me` — weryfikacja tokenu, zwrot tenantId + portalUsername
-- [x] `POST /auth/logout` — usunięcie sesji
-- [x] `POST /auth/verify-portal` — zachowany jako `@deprecated` alias
-- [x] CORS — zachowane otwarte z obsługą `exp://`, `localhost`, LAN
-- [x] `services/api.ts` — `apiFetch()` helper z Bearer tokenem (SecureStore)
-- [x] `hooks/useApi.ts` — axios interceptor dodający Bearer token
-- [x] `services/work.ts` — wszystkie `fetch(BASE_URL/...)` zastąpione `apiFetch(/...)`
-- [x] `app/(auth)/register.tsx` — uproszczony flow: zawsze login + hasło, bez auto-hasła miesięcznego, zapis `sessionToken` w SecureStore
+- [x] `components/Skeleton.tsx` (shimmer na core `Animated`) → `Skeleton`, `SkeletonRow`, `SkeletonList`; wpięte w accounts, portal-messages, schedule
+- [x] Pull-to-refresh (`RefreshControl`) w `accounts.tsx`, `portal-messages.tsx`, `schedule.tsx`
+- [x] `services/haptics.ts` — helper `haptic(type)`
+- [x] Responsywny layout — `constants/layout.ts` + `useAppLayout.ts` + `Screen.tsx` (fluid padding, `maxContentWidth` na tabletach, wyliczane `tileWidth`)
+- [x] Praca: przełącznik widoków (kompaktowy / grid), zapis w AsyncStorage
+- [x] Animacje przejść ekranów w `app/(app)/_layout.tsx` (`slide_from_right`, 260 ms, gesture back)
+- [x] `accentColor` — `useColors()` w `ThemeContext`, picker 6 kolorów + AsyncStorage
+- [x] Fluid typography — skala S/M/L (`textScaleFactor`), łączona z systemowym Dynamic Type
+- [x] `AnimatedEmptyState` (core `Animated` — pulsująca ikona) w pustych stanach (konta, wiadomości)
+- [ ] **[KOREKTA]** ~~`react-native-reanimated` 4.1.1 + `lottie-react-native` 7.3.1 zainstalowane~~ — **nieprawda**: brak tych pakietów w `package.json` i w całej historii gita repo. `components/LottieState.tsx` **nie istnieje**. Jeśli te biblioteki są potrzebne, trzeba je dodać od zera (`npx expo install react-native-reanimated lottie-react-native` + babel plugin) — to nowy natywny build, nie tylko OTA.
+- [~] Shared element / hero transitions — punkt zależał od `reanimated`, którego nie ma; obecnie: `FadeInDown`-owe wejścia na core `Animated` jako przybliżenie, bez prawdziwych shared-element transitions
 
 ---
 
-## Faza 4: Dokumentacja ✅
+## Live Activities / Dynamic Island
 
-- [x] `tasks.md` — ten plik (zastąpił TASKS.md z historią FAZ 0–9)
-- [x] `known-bugs.md` — katalog znanych błędów (KB-001…KB-009)
-- [x] `setup.md` — instrukcja OOTB dla nowego dewelopera
-- [x] `readme.md` — zaktualizowany entry point z linkami do dokumentacji
+- [ ] ODROCZONE — wymaga płatnego Apple Developer (ActivityKit = `.appex`, niemożliwe na Personal Team)
+
+---
+
+## Backend / multi-tenant — zweryfikowane w kodzie ✅
+
+- [x] `requireAuth` (Bearer token) zastosowany na praktycznie wszystkich endpointach Praca/Monitorowanie w `index.ts` — celowo bez auth: `/health`, `/portal/health`, `/debug/*`
+- [x] `portalSessionForTenant(tenantId)` — login do portalu IVU danymi z `Tenant` w DB (hasło odszyfrowane AES-256-GCM), **nie** globalnym env
+- [x] Cron auto-sync (`0 */6 * * *`) iteruje po **wszystkich** tenantach w bazie (`runScheduledSync` → `prisma.tenant.findMany()`) — `known-bugs.md` KB-008 ma nieaktualny tytuł „jeden tenant", opis w środku jest już poprawny
+- [x] `POST /portal/confirm-timecard` — kod zaimplementowany (HTTP + fallback Playwright), **ale** działanie na produkcji jest niestabilne → patrz `known-bugs.md` KB-005 (nie jest to już „TODO do napisania", to „napisane, ale wymaga debugowania na VPS")
+- [ ] `npx prisma migrate deploy` na VPS po dodaniu `Tenant`/`AppSession` — nie do zweryfikowania zdalnie z tego środowiska, do potwierdzenia przez maintainera na VPS (patrz `known-bugs.md` KB-007)
 
 ---
 
 ## Backlog
 
 ### Priorytet wysoki
-- [ ] Zastosować `requireAuth` middleware na endpointach Praca/Monitorowanie w `index.ts` (DB Tenant gotowy, middleware gotowy)
-- [ ] `portalLogin(tenantId)` — credentials z DB tenanta zamiast globalnego env
-- [ ] Cron auto-sync per tenant — iteracja po wszystkich tenantach (teraz: globalny env)
-- [ ] `npx prisma migrate deploy` na VPS po dodaniu Tenant/AppSession
+- [ ] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`) — pakiet nadal **nie jest zainstalowany**
+- [ ] Naprawić błąd `tsc` w `app/(app)/index.tsx` (`PressScale` + `accessibilityLabel` — prop nieobecny w typie `Props` komponentu)
+- [ ] Zdecydować co dalej z KB-005 (Playwright `confirm-timecard` niestabilny na VPS) — debug flow albo reverse proxy z sieci firmowej (patrz KB-002)
 
 ### Priorytet normalny
 - [ ] Smoke test OOTB: rejestracja z Expo Go → sync grafiku → wyszukanie pociągu PLK
 - [ ] Smoke test izolacji: 2 konta IVU → osobne grafiki
-- [ ] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`)
 - [ ] Lepsze błędy sync w UI: parsować body 502, pokazać przyczynę (portal/sieć)
-- [ ] `POST /portal/confirm-timecard` — Playwright confirm (oznaczony TODO)
 
 ### Priorytet niski
-- [ ] Usunąć lub uprościć `altstoreSource.ts` (domena nieaktywna)
+- [ ] `altstoreSource.ts` — **uwaga:** aktywnie zarejestrowany w `index.ts` (`registerAltStoreSourceRoutes`), to nie jest dead code; ocenić realną potrzebę przed usunięciem/uproszczeniem
 - [ ] HTTPS na VPS (Caddy) — fix dla KB-001
-- [ ] CI: GitHub Actions — `tsc --noEmit` + `prisma validate`
-- [ ] Testy TypeScript: `npx tsc --noEmit` w obu projektach bez błędów
+- [ ] CI: GitHub Actions — `tsc --noEmit` + `prisma validate` (folder `.github/workflows` obecnie nie istnieje)
+- [ ] `tsc --noEmit` bez błędów w obu projektach — backend: ✅ (po `prisma generate`); frontend: ❌ 1 błąd, patrz wyżej
+
+---
+
+## Fazy zamknięte (skrócone)
+
+### Faza 1 — Audyt i rebranding ✅
+Usunięcie dead code backendu, deduplikacja `PLK_KEY`, JSDoc kluczowych modułów, rebranding konfiguracji (`package.json`, `app.json`, `docker-compose.yml`) na „Kolejarz".
+
+### Faza 2 — Bezpieczeństwo repo ✅
+`.gitignore` rozszerzony (klucze, `dist/`, `dev.db`, `.local-credentials/`), `.env.example` dla obu projektów, redakcja PII/haseł/IP z dokumentacji, `docs/AGENT-SSH-VPS.md` → stub + realne dane w `.local-credentials/`.
+
+### Faza 3 — Multi-tenant i OOTB onboarding ✅
+Modele Prisma `Tenant`/`AppSession`, szyfrowanie AES-256-GCM haseł portalu, `authMiddleware.ts`, endpointy `/auth/register`, `/auth/me`, `/auth/logout`, `apiFetch()` z Bearer tokenem po stronie frontendu.
+
+### Faza 4 — Dokumentacja ✅
+`known-bugs.md`, `setup.md`, `readme.md` zaktualizowane.
 
 ---
 
@@ -161,4 +148,6 @@
 | Zmiana bundle ID → utrata OTA | Zaplanować nowy EAS build + `npx expo run:ios` |
 | Portal IVU blokuje IP VPS (Akamai 503) | Znany bug KB-002 — bez fix krótkookresowego |
 | Expo Go bez ATS na iOS | Znany bug KB-001 — native build jako obejście |
-| Prisma migrate nie uruchomiona na VPS | Backlog — wymagane ręcznie po każdej zmianie schematu |
+| Prisma migrate nie uruchomiona na VPS | Nie do zweryfikowania zdalnie — wymaga potwierdzenia przez maintainera (KB-007) |
+| Confirm-timecard (Playwright) niestabilny na VPS | Znany bug KB-005 — karty potwierdzane ręcznie w portalu |
+| Brak `reanimated`/`lottie` mimo wcześniejszych wpisów w tym pliku | Ryzyko nieporozumienia w planowaniu — patrz sekcja UI/UX |
