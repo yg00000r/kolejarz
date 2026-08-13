@@ -58,7 +58,7 @@
 - [ ] Łączność Windows ↔ backend VPS **przez Tailscale** (nie przez publiczne IP) — do skonfigurowania na Windows/VPS; test bezpośredni na publiczne IP z zewnętrznego środowiska (bez Tailscale) dał `Connection reset`/timeout, ale to nie jest realny sygnał awarii, bo produkcyjna ścieżka dostępu to Tailscale
 - [ ] `npx expo run:android --device` na Pixel 9a
 - [ ] Bugtest OOTB na Androidzie: rejestracja → sync grafiku → wyszukanie pociągu PLK → nowe wpisy w `known-bugs.md` (KB-013+)
-- [ ] Drobny porządek: `app.json → android.permissions` ma zduplikowane wpisy `USE_BIOMETRIC` / `USE_FINGERPRINT` (każdy 2×) — do wyczyszczenia przy najbliższej edycji
+- [x] Drobny porządek: `app.json → android.permissions` miał zduplikowane wpisy `USE_BIOMETRIC` / `USE_FINGERPRINT` (każdy 2×) — wyczyszczone w ramach **D3**
 
 ---
 
@@ -71,13 +71,12 @@
 - [ ] Portal IVU: `https://portal.intercity.pl/` z IP VPS — zwraca 403 (Akamai blokuje IP centrów danych), to znany, odroczony problem — **KB-002**, nie nowa awaria
 - [x] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md` — backend/portal działają poprawnie, ale węzeł `vps-edge` jest offline → opisane jako **KB-013** (niski priorytet, nie blokuje)
 
-### Faza 1 — Fundament: zależności i konfiguracja natywna
-- [ ] Dodać `@pchmn/expo-material3-theme` + `@material/material-color-utilities` do `mind-app/package.json`
-- [ ] `app.json`: network security config / `usesCleartextTraffic` dla HTTP do VPS (odpowiednik ATS-exception, którą ma iOS) — bez tego Android 9+ blokuje sync grafiku
-- [ ] `app.json`: dodać `expo-notifications` do `plugins` (obecnie brak — Android 13+ `POST_NOTIFICATIONS` może wymagać explicit config)
-- [ ] `app.json`: wyczyścić zduplikowane `android.permissions`
-- [ ] `eas.json`: dodać sekcję `android` (obecnie tylko iOS)
-- [ ] Oznaczyć jako legacy (bez usuwania na tym etapie): `services/appUpdate.ts` (AltStore/IPA flow), `mind-backend/src/altstoreSource.ts` — nieaktywne dla Androida
+### Faza 1 — Fundament: zależności i konfiguracja natywna ✅ (2026-08-13, D1–D5)
+- [x] **D1** — Dodano `@pchmn/expo-material3-theme` (^1.4.0) + `@material/material-color-utilities` (^0.4.0) do `mind-app/package.json`. Tylko instalacja — wiring (`useMaterial3Theme()` w `_layout.tsx`) to Faza 2 (E3)
+- [x] **D2** — `app.json`: nowy plik `network-security-config.xml` (odpowiednik ATS-exception z iOS) + plugin `expo-network-security-config` — cleartext HTTP dozwolony tylko dla `57.128.246.232` (aktualny `BASE_URL`), plus `<debug-overrides>` pozwalające na cleartext do dowolnego LAN IP w buildach `debuggable` (dev-client/`expo run:android`, testy z Windows/Pixel na osiedlowej sieci). Zweryfikowane realnym `npx expo prebuild --platform android` — atrybut `android:networkSecurityConfig` i plik w `res/xml/` wygenerowane poprawnie. Do usunięcia po domknięciu **B4/KB-014** (HTTPS)
+- [x] **D3** — `app.json`: dodano `expo-notifications` do `plugins` (ikona `android-icon-monochrome.png`, kolor `#007AFF` — Android 13+ `POST_NOTIFICATIONS` + kanały mają teraz explicit config) i wyczyszczono zduplikowane `android.permissions`
+- [x] **D4** — `eas.json`: sekcja `android` dla wszystkich profili — `development`/nowy `preview` (APK, do sideloadu na Pixela), `production` (`app-bundle`, na przyszłość pod Play Store)
+- [x] **D5** — Oznaczone jako `LEGACY` komentarzem w kodzie (bez usuwania): `mind-backend/src/altstoreSource.ts` (zrobione przy **C3**), `mind-app/services/appUpdate.ts` (cała ścieżka `nativeUpdate`/AltStore/IPA — iOS-only, zamrożona; część OTA przez `expo-updates` zostaje, ale docelowa strategia dla Androida to osobne zadanie **I4**)
 
 ### Faza 2 — System tokenów MD3 (kolor, typografia, kształt)
 - [ ] Zastąpić `Colors.dark`/`Colors.light` w `constants/theme.ts` (obecne kolory systemowe iOS) prawdziwymi tonalnymi paletami MD3 generowanymi z seed color — 6 obecnych presetów akcentu jako seed + 7. opcja „Automatyczny (Material You)" jako domyślna na Androidzie 12+

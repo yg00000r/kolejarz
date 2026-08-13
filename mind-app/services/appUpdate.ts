@@ -4,6 +4,16 @@ import { Alert, Linking, Platform } from 'react-native';
 import { BASE_URL } from '../constants/api';
 import { APP_VERSION } from '../constants/version';
 
+/**
+ * LEGACY / iOS-only (2026-08-13): cała ścieżka „nativeUpdate" (IPA + AltStore,
+ * `fetchNativeRelease`/`buildAltStoreInstallUrl`/`openNativeUpdate`) dotyczy tylko
+ * sideloadingu na iOS — zob. `altstoreSource.ts`. Po decyzji o przejściu na
+ * Android-only ten kod jest zamrożony, nie rozwijany dalej. `checkForUpdatesOnLaunch`
+ * już dziś bailuje na Androidzie (`Platform.OS !== 'ios'`), więc na Androidzie w praktyce
+ * uruchamiana jest tylko część OTA (`expo-updates`, wieloplatformowa, bez zmian).
+ * Docelowa strategia OTA/EAS Update dla Androida — patrz `TASKS.md` → zadanie I4.
+ */
+
 export type NativeReleaseInfo = {
   nativeVersion: string;
   nativeBuildNumber: number;
