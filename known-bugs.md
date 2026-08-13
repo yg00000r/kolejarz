@@ -176,3 +176,15 @@ Token sesji (`kolejarz_session_token`) jest przechowywany w SecureStore — pers
 **Wpływ:** Brak — backend jest osiągalny bezpośrednio przez węzeł `server` (100.66.57.89, kontener `kolejarz` na porcie 3000), zweryfikowane `GET /health` i `GET /portal/health` (200, patrz `TASKS.md` → Faza 0). `vps-edge` wygląda na osobny reverse proxy/edge, nieaktualnie wykorzystywany — na czas developmentu pomijamy go i łączymy się bezpośrednio z `server`.
 
 **Do zrobienia (niski priorytet, nie blokuje developmentu):** Sprawdzić, czy `vps-edge` powinien działać (jaka jest jego rola — reverse proxy? backup?) i ewentualnie przywrócić albo zdemontować, jeśli nieaktywny.
+
+### [KB-014] HTTPS dla backendu (B4) — przygotowane, blokowane na 2 kroki manualne
+
+**Kontekst (2026-08-13):** `server` (100.66.57.89 w tailnecie) to w rzeczywistości domowy serwer (interfejs `eno1` z adresem LAN `192.168.1.251`, brama domyślna `192.168.1.1`), nie klasyczny datacenter VPS — mimo że w dokumentacji/nazwach zmiennych używamy „VPS". Ma już działający **Caddy** (systemd, `active`/`enabled`) z automatycznym HTTPS dla `yg00r.com` (reverse proxy do innego kontenera), co potwierdza, że port 80/443 są poprawnie przekierowane z routera domowego/Cloudflare do tej maszyny.
+
+**Plan B4:** dodać analogiczny blok Caddy `kolejarz.yg00r.com { reverse_proxy 127.0.0.1:3000 }` (backend Kolejarz, kontener `kolejarz`, ten sam port co dotychczasowe `BASE_URL`). Przygotowano gotowy skrypt `scripts/kolejarz-setup-https.sh` (skopiowany też na serwer jako `~/kolejarz-setup-https.sh`), który dopisuje blok do `/etc/caddy/Caddyfile` (z backupem), waliduje i przeładowuje Caddy.
+
+**Blokery — wymagają człowieka, agent nie może ich wykonać zdalnie:**
+1. **DNS w Cloudflare** — trzeba dodać rekord `kolejarz` (CNAME → `yg00r.com`, proxied/orange cloud, tak jak apex) w zonie `yg00r.com`. Agent nie ma dostępu do panelu/API Cloudflare (nie znaleziono tokenu API na serwerze, nie szukano głębiej ze względów bezpieczeństwa).
+2. **Sudo na `server`** — użytkownik `ygor` jest w grupie `sudo`, ale nie ma `NOPASSWD`, a agent łączy się przez SSH bez możliwości interaktywnego podania hasła. Trzeba ręcznie odpalić na serwerze: `sudo bash ~/kolejarz-setup-https.sh`.
+
+**Po wykonaniu obu kroków:** zweryfikować `curl -sI https://kolejarz.yg00r.com/health` (oczekiwane `200`, ważny certyfikat), potem zmienić `BASE_URL` w `mind-app/constants/api.ts` z `http://57.128.246.232:3000` na `https://kolejarz.yg00r.com` i zrobić commit.
