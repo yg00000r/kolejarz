@@ -69,7 +69,7 @@
 ### Faza 0 — Infrastruktura (przed czymkolwiek innym)
 - [x] Backend VPS: potwierdzić łączność **przez Tailscale** (`GET /health`, `GET /portal/health`) — **zweryfikowane 2026-08-13**: agent chmurowy dołączony do tailnetu (`tailscale up`), oba endpointy odpowiadają 200 (`/portal/health` zwraca nawet `loggedIn: true` ze świeżym `lastSyncAt`). Węzeł `server` (100.66.57.89) online, dostępny też po SSH bez kluczy (Tailscale SSH). Węzeł `vps-edge` offline — pomijamy, pracujemy bezpośrednio na `server`
 - [ ] Portal IVU: `https://portal.intercity.pl/` z IP VPS — zwraca 403 (Akamai blokuje IP centrów danych), to znany, odroczony problem — **KB-002**, nie nowa awaria
-- [x] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md` — **nie potrzebne, wszystko działa poprawnie**
+- [x] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md` — backend/portal działają poprawnie, ale węzeł `vps-edge` jest offline → opisane jako **KB-013** (niski priorytet, nie blokuje)
 
 ### Faza 1 — Fundament: zależności i konfiguracja natywna
 - [ ] Dodać `@pchmn/expo-material3-theme` + `@material/material-color-utilities` do `mind-app/package.json`

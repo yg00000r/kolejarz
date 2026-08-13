@@ -154,3 +154,11 @@ Automatyczny sync co 6h (cron) aktualnie iteruje po wszystkich tenantach w bazie
 ### [KB-009] Expo Go i sesja — token w SecureStore
 
 Token sesji (`kolejarz_session_token`) jest przechowywany w SecureStore — persystuje między restartami aplikacji. Po reinstalacji aplikacji (np. po zmianie bundle ID) token jest tracony i wymagana jest ponowna rejestracja z danymi IVU.
+
+### [KB-013] Węzeł `vps-edge` offline w tailnecie
+
+**Objaw:** W `tailscale status` węzeł `vps-edge` (100.121.166.6) pokazuje się jako `offline` (ostatnio widziany kilka–kilkanaście godzin przed sprawdzeniem, 2026-08-13).
+
+**Wpływ:** Brak — backend jest osiągalny bezpośrednio przez węzeł `server` (100.66.57.89, kontener `kolejarz` na porcie 3000), zweryfikowane `GET /health` i `GET /portal/health` (200, patrz `TASKS.md` → Faza 0). `vps-edge` wygląda na osobny reverse proxy/edge, nieaktualnie wykorzystywany — na czas developmentu pomijamy go i łączymy się bezpośrednio z `server`.
+
+**Do zrobienia (niski priorytet, nie blokuje developmentu):** Sprawdzić, czy `vps-edge` powinien działać (jaka jest jego rola — reverse proxy? backup?) i ewentualnie przywrócić albo zdemontować, jeśli nieaktywny.
