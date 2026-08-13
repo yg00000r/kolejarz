@@ -50,6 +50,18 @@ model Shift {
   @@unique([tenantId, date])
 }
 
+model TrainConsist {
+  id          Int      @id @default(autoincrement())
+  cislo       String   @unique          // numer pociągu, np. "113/41006/7"
+  kategoria   String                    // IC | TLK | ICN | EXP | EIC ...
+  nazwa       String?                   // np. "Silesia"
+  relacja     String?                   // skrót trasy z listy
+  rok         Int                       // rozkład jazdy (rok)
+  variantsJson String                   // JSON: warianty składu (vlacek[])
+  updatedAt   DateTime @default(now()) @updatedAt
+  createdAt   DateTime @default(now())
+}
+
 model RouteDefinition {
   id          Int            @id @default(autoincrement())
   name        String

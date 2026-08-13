@@ -176,7 +176,8 @@
 ## Backlog
 
 ### Priorytet wysoki
-- [x] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`) — **zrobione 2026-08-13**: `authLimiter` (20 req / 15 min) na `/auth/*`, `syncLimiter` (10 req / 5 min) na `/shifts/sync`, zweryfikowane lokalnie (429 + `RateLimit-*`/`Retry-After` po przekroczeniu limitu)
+- [x] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`) — **zrobione i zdeployowane 2026-08-13**: `authLimiter` (20 req / 15 min) na `/auth/*`, `syncLimiter` (10 req / 5 min) na `/shifts/sync`. Zweryfikowane lokalnie i **na produkcji** (przez SSH na `server`, `docker compose build && up -d`) — `429` + nagłówki `RateLimit-*`/`Retry-After` po przekroczeniu limitu, `/health`/`/portal/health`/`/consists` dalej działają
+- [x] **B5 — Backport produkcyjnych zmian do gita** — **zrobione 2026-08-13**: przy deployu B1 wykryto, że VPS miał kod nigdy niewpushowany do repo (rsync z Maca, nie git): cały feature „składy pociągów" (`services/vagonweb.ts`, model `TrainConsist` + migracja `20260630000000_add_train_consist`, endpointy `GET /consists`, `GET /consists/*cislo`, `POST /consists/sync`, cron tygodniowy) oraz fix bezpieczeństwa w `services/portal.ts` (obsługa `PORTAL_PASSWORD` z env + niedrukowanie surowego hasła w logach, tylko długość). Wszystko backportowane do repo — `mind-backend/src/index.ts`, `services/portal.ts`, `services/vagonweb.ts`, `prisma/schema.prisma` są teraz **bit w bit identyczne** z tym, co faktycznie działa na VPS. **Wniosek na przyszłość:** deploy na VPS musi iść przez git (albo repo staje się źródłem prawdy), nie przez ręczny rsync z lokalnej maszyny — inaczej ta desynchronizacja wróci
 - [ ] Naprawić błąd `tsc` w `app/(app)/index.tsx` (`PressScale` + `accessibilityLabel` — prop nieobecny w typie `Props` komponentu)
 - [ ] Zdecydować co dalej z KB-005 (Playwright `confirm-timecard` niestabilny na VPS) — debug flow albo reverse proxy z sieci firmowej (patrz KB-002)
 

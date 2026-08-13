@@ -227,13 +227,21 @@ export async function login(user?: string, pass?: string): Promise<string> {
 
   console.log(`[Portal] Logging in as ${username}...`);
 
+  // Explicit password wins. Otherwise prefer PORTAL_PASSWORD (seasonal override
+  // e.g. "Lato08,."), then month+year auto variants for backward compatibility.
   const passwords =
     pass !== undefined
       ? [pass]
-      : [...portalPasswordVariantsForOffset(0), ...portalPasswordVariantsForOffset(1)];
+      : [
+          ...(process.env.PORTAL_PASSWORD?.trim()
+            ? [process.env.PORTAL_PASSWORD.trim()]
+            : []),
+          ...portalPasswordVariantsForOffset(0),
+          ...portalPasswordVariantsForOffset(1),
+        ].filter((p, i, arr) => arr.indexOf(p) === i);
 
   for (const password of passwords) {
-    console.log(`[Portal] Trying password for ${password}...`);
+    console.log(`[Portal] Trying password candidate (${password.length} chars)...`);
 
     let res: Response;
     try {
@@ -252,7 +260,7 @@ export async function login(user?: string, pass?: string): Promise<string> {
         throw new Error(`Portal login failed: ${res.status} ${text}`);
       }
       if (res.status === 401 || res.status === 403) {
-        console.log(`[Portal] Password ${password} failed, trying next...`);
+        console.log(`[Portal] Password candidate failed (${password.length} chars), trying next...`);
         continue;
       }
       throw new Error(`Portal login failed: ${res.status} ${text}`);
@@ -262,7 +270,7 @@ export async function login(user?: string, pass?: string): Promise<string> {
     const token = json.token ?? null;
 
     if (!token) {
-      console.log(`[Portal] Password ${password} failed, trying next...`);
+      console.log(`[Portal] Password candidate failed (${password.length} chars), trying next...`);
       continue;
     }
 

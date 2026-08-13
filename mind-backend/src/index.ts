@@ -28,6 +28,11 @@ import {
   clearToken,
   defaultPortalUser,
 } from './services/portal';
+import {
+  fetchTrainList,
+  fetchCurrentConsist,
+  type TrainListEntry,
+} from './services/vagonweb';
 
 dotenv.config();
 
@@ -501,6 +506,114 @@ app.post('/portal/sync', requireAuth, async (req: AuthRequest, res) => {
   } catch (e) {
     return res.status(502).json({ success: false, error: String(e) });
   }
+});
+
+// ── Train consists (vagonWEB) ─────────────────────────
+
+const CONSIST_ROK = Number(process.env.CONSIST_ROK) || new Date().getFullYear();
+let consistSyncRunning = false;
+let lastConsistSyncAt: string | null = null;
+
+async function syncConsists(rok: number, limit?: number): Promise<number> {
+  if (consistSyncRunning) throw new Error('Sync składów już trwa');
+  consistSyncRunning = true;
+  try {
+    console.log(`[Consist] Pobieram listę pociągów ${rok}...`);
+    const list: TrainListEntry[] = await fetchTrainList(rok);
+    const slice = limit ? list.slice(0, limit) : list;
+    console.log(`[Consist] ${list.length} pociągów, syncuję ${slice.length}`);
+
+    let ok = 0;
+    for (const t of slice) {
+      try {
+        const variants = await fetchCurrentConsist(t.cislo, t.nazwa ?? '', rok);
+        await prisma.trainConsist.upsert({
+          where: { cislo: t.cislo },
+          create: {
+            cislo: t.cislo,
+            kategoria: t.kategoria,
+            nazwa: t.nazwa,
+            relacja: t.relacja,
+            rok,
+            variantsJson: JSON.stringify(variants),
+          },
+          update: {
+            kategoria: t.kategoria,
+            nazwa: t.nazwa,
+            relacja: t.relacja,
+            rok,
+            variantsJson: JSON.stringify(variants),
+          },
+        });
+        ok++;
+      } catch (e) {
+        console.warn(`[Consist] Błąd dla ${t.cislo}: ${e}`);
+      }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    lastConsistSyncAt = new Date().toISOString();
+    console.log(`[Consist] Zsynchronizowano ${ok}/${slice.length}`);
+    return ok;
+  } finally {
+    consistSyncRunning = false;
+  }
+}
+
+// GET /consists — lista składów (summary lub pełne warianty)
+app.get('/consists', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const summary = req.query.summary === '1';
+    const rows = await prisma.trainConsist.findMany({ orderBy: { cislo: 'asc' } });
+    const data = rows.map((r) => ({
+      cislo: r.cislo,
+      kategoria: r.kategoria,
+      nazwa: r.nazwa,
+      relacja: r.relacja,
+      rok: r.rok,
+      updatedAt: r.updatedAt,
+      ...(summary ? {} : { warianty: JSON.parse(r.variantsJson) }),
+    }));
+    return res.json({ count: data.length, lastSyncAt: lastConsistSyncAt, consists: data });
+  } catch (e) {
+    return res.status(500).json({ error: 'consists query failed', detail: String(e) });
+  }
+});
+
+// GET /consists/*cislo — pojedynczy skład (numer zawiera "/", więc splat)
+app.get('/consists/*cislo', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const raw = (req.params as Record<string, string | string[]>).cislo;
+    const cislo = Array.isArray(raw) ? raw.join('/') : String(raw);
+    const row = await prisma.trainConsist.findUnique({ where: { cislo } });
+    if (!row) return res.status(404).json({ error: 'Nie znaleziono składu' });
+    return res.json({
+      cislo: row.cislo,
+      kategoria: row.kategoria,
+      nazwa: row.nazwa,
+      relacja: row.relacja,
+      rok: row.rok,
+      updatedAt: row.updatedAt,
+      warianty: JSON.parse(row.variantsJson),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'consist query failed', detail: String(e) });
+  }
+});
+
+// POST /consists/sync — odśwież składy z vagonweb (może trwać kilka minut)
+app.post('/consists/sync', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { rok, limit } = (req.body ?? {}) as { rok?: number; limit?: number };
+    const count = await syncConsists(rok || CONSIST_ROK, limit);
+    return res.json({ success: true, synced: count, syncedAt: lastConsistSyncAt });
+  } catch (e) {
+    return res.status(502).json({ success: false, error: String(e) });
+  }
+});
+
+// Cron: odśwież składy raz w tygodniu (poniedziałek 04:00)
+cron.schedule('0 4 * * 1', () => {
+  syncConsists(CONSIST_ROK).catch((e) => console.error('[Consist] Cron error:', e));
 });
 
 // ── Route Controls ────────────────────────────────────
