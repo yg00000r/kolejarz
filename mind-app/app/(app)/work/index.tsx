@@ -128,8 +128,8 @@ export default function WorkScreen() {
         })
         .catch(() => {});
       Alert.alert('Portal', `Zsynchronizowano ${count} służb`);
-    } catch {
-      Alert.alert('Błąd', 'Nie udało się zsynchronizować grafiku');
+    } catch (e) {
+      Alert.alert('Błąd', e instanceof Error ? e.message : 'Nie udało się zsynchronizować grafiku');
     } finally {
       setSyncing(false);
     }

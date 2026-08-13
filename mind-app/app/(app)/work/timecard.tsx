@@ -98,8 +98,8 @@ export default function TimecardScreen() {
       if (r.synced > 0) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-    } catch {
-      Alert.alert('Błąd', 'Nie udało się zsynchronizować z portalem');
+    } catch (e) {
+      Alert.alert('Błąd', e instanceof Error ? e.message : 'Nie udało się zsynchronizować z portalem');
     } finally {
       setSyncing(false);
     }

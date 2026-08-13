@@ -184,7 +184,7 @@
 ### Priorytet normalny
 - [ ] Smoke test OOTB: rejestracja z Expo Go → sync grafiku → wyszukanie pociągu PLK
 - [ ] Smoke test izolacji: 2 konta IVU → osobne grafiki
-- [ ] Lepsze błędy sync w UI: parsować body 502, pokazać przyczynę (portal/sieć)
+- [x] **C4** — Lepsze błędy sync w UI (2026-08-13): `syncShifts`/`syncPortalStatus` parsują teraz body błędu (`{error, detail}`) i klasyfikują przyczynę (login do portalu / blokada Akamai-503 / problem sieciowy) na komunikat PL zamiast generycznego "Nie udało się..."; `work/index.tsx` i `work/timecard.tsx` wyświetlają ten komunikat w `Alert`
 
 ### Priorytet niski
 - [x] **C3** — `altstoreSource.ts` oceniony (2026-08-13): aktywnie zarejestrowany w `index.ts`, ale **funkcjonalnie bezczynny** (brak `.ipa` w `app-releases/` na VPS → `GET /altstore/source.json` zwraca 404). Zdecydowano: **nie usuwać teraz** — oznaczony komentarzem `LEGACY` w kodzie jako zamrożony po decyzji Android-only, nieszkodliwy w bezczynności. Do ponownej oceny, jeśli iOS zostanie ostatecznie zamknięty (nie tylko zamrożony)

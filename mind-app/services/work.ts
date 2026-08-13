@@ -229,6 +229,37 @@ export async function fetchCrewOnTrip(date: string, trip: string): Promise<CrewO
 // ── Sync ─────────────────────────────────────────────
 
 /**
+ * Maps a raw backend error string (from portal.ts / index.ts, e.g. "Portal login
+ * failed: 503 ...", "fetch failed", "auth expired") to a user-facing Polish
+ * message that distinguishes "problem z portalem" from "problem sieciowy",
+ * instead of a generic "coś nie zadziałało".
+ */
+function classifySyncErrorDetail(raw: string): string {
+  const s = raw.toLowerCase();
+  if (s.includes('login failed') || s.includes('auth expired') || s.includes('unauthorized')) {
+    return 'Nie udało się zalogować do portalu IVU — sprawdź dane konta w Ustawieniach (mogło się zmienić hasło).';
+  }
+  if (s.includes('503') || s.includes('akamai') || s.includes('edgesuite') || s.includes('portal login failed')) {
+    return 'Portal IVU tymczasowo blokuje żądania z naszego serwera (znany problem — KB-002). Spróbuj ponownie za kilka minut.';
+  }
+  if (s.includes('fetch failed') || s.includes('econnrefused') || s.includes('etimedout') || s.includes('enotfound') || s.includes('network')) {
+    return 'Backend nie mógł połączyć się z portalem IVU — problem sieciowy po stronie serwera. Spróbuj ponownie.';
+  }
+  return raw;
+}
+
+/** Parses a failed sync response's JSON body ({ error, detail }) into a classified, user-facing Error. */
+async function syncApiError(res: Response, fallback: string): Promise<Error> {
+  try {
+    const data = (await res.json()) as { error?: string; detail?: string };
+    const raw = data.detail ?? data.error;
+    return new Error(raw ? classifySyncErrorDetail(String(raw)) : fallback);
+  } catch {
+    return new Error(fallback);
+  }
+}
+
+/**
  * Triggers a portal sync on the backend — the backend logs into IVU portal,
  * fetches the monthly schedule HTML, parses it and upserts into the database.
  * Returns the number of shifts upserted.
@@ -241,7 +272,7 @@ export async function syncShifts(month?: number, year?: number): Promise<{ count
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body,
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw await syncApiError(res, `Nie udało się zsynchronizować grafiku (HTTP ${res.status})`);
   return res.json();
 }
 
@@ -264,7 +295,7 @@ export type TimecardConfirmResult = {
 
 export async function syncPortalStatus(): Promise<{ success: boolean; synced: number }> {
   const res = await apiFetch(`/portal/sync`, { method: 'POST' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw await syncApiError(res, `Nie udało się zsynchronizować z portalem (HTTP ${res.status})`);
   return res.json();
 }
 
