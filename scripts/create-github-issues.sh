@@ -4,11 +4,16 @@
 # konfiguracji, bez fizycznego urządzenia / VPS / Windows / Tailscale), i priorytetami.
 #
 # Wymaga: `gh` CLI zalogowane na koncie z uprawnieniem do zapisu Issues w tym repo
-# (agent chmurowy Cursor NIE ma tego uprawnienia — stąd ten skrypt do odpalenia lokalnie).
+# (agent chmurowy Cursor NIE ma tego uprawnienia — stąd ten skrypt do odpalenia lokalnie
+# albo przez GitHub Actions, patrz niżej).
 #
-# Użycie:
+# Użycie (lokalnie, z komputera):
 #   gh auth login          # jeśli jeszcze nie zalogowany, z uprawnieniami repo
 #   ./scripts/create-github-issues.sh
+#
+# Użycie (z telefonu, bez terminala): zakładka "Actions" w repo na GitHubie ->
+# workflow "Utwórz GitHub Issues z planu Android/MD3" -> "Run workflow" -> pole
+# "confirm" wpisz "tak" (patrz .github/workflows/create-github-issues.yml).
 #
 # UWAGA: nieidempotentny — ponowne odpalenie utworzy duplikaty. Podgląd całej listy:
 # docs/GITHUB_ISSUES_PLAN.md

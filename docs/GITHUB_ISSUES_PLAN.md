@@ -2,7 +2,14 @@
 
 > Ten plik jest materiałem źródłowym/podglądem dla `scripts/create-github-issues.sh`. Kodowanie: litera = etap, cyfra = zadanie w etapie (np. `A1`, `A2`, `B1`...). `(MC)` w tytule = zadanie da się zrealizować w całości przez agenta chmurowego (edycje kodu/konfiguracji, bez fizycznego urządzenia, VPS, Windows czy Tailscale). Priorytet: **Wysoki / Normalny / Niski**.
 >
-> **Jak to uruchomić:** ten agent nie ma dostępu do GitHub Issues (integracja bez uprawnienia `Issues`, potwierdzone `403 Resource not accessible by integration`). Uruchom `scripts/create-github-issues.sh` lokalnie, z własnym uprawnionym `gh auth login`, albo nadaj integracji Cursor uprawnienie do Issues i poproś mnie ponownie.
+> **Jak to uruchomić:** ten agent nie ma dostępu do GitHub Issues z tego środowiska (`403 Resource not accessible by integration` na `gh api .../issues` i `.../labels`, mimo że apka "Cursor" ma w ustawieniach zaznaczone "Read and write" dla Issues — token wydawany agentowi w tym środowisku i tak nie ma prawa zapisu do Issues; to nie jest coś, co można odblokować z ustawień integracji na GitHubie).
+>
+> Dwie opcje, które **nie** zależą od tego ograniczenia:
+>
+> 1. **Z telefonu, bez terminala** (np. iPhone): w repo na GitHubie (web albo appka) wejdź w zakładkę **Actions** → workflow **„Utwórz GitHub Issues z planu Android/MD3”** → **Run workflow** → w polu `confirm` wpisz `tak` → **Run workflow**. Workflow (`.github/workflows/create-github-issues.yml`) używa wbudowanego `GITHUB_TOKEN` z uprawnieniem `issues: write` i sam odpala `scripts/create-github-issues.sh`.
+> 2. **Lokalnie, z komputera z terminalem**: `gh auth login` (własne, uprawnione konto) → `./scripts/create-github-issues.sh`.
+>
+> Skrypt jest **nieidempotentny** — odpalenie drugi raz utworzy duplikaty 51 issues.
 
 | ID | Tytuł | MC | Priorytet | Źródło w `TASKS.md` |
 |---|---|---|---|---|
