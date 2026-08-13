@@ -80,6 +80,20 @@ Sprawdź logi Dockera pod kątem raw HTML z portalu.
 
 **Fix:** Debug Playwright flow na VPS, ewentualnie reverse proxy z sieci firmowej (patrz KB-002).
 
+**Diagnoza (2026-08-13, na żywym koncie, przez SSH+Tailscale na VPS):**
+
+Przetestowano realną kartę (2026-08-12, `allocationId 18716971049`, konto tenantId=1):
+
+1. **HTTP (`confirmAllocationHttp`)** — zapytanie dochodzi (status 200), portal odpowiada `{"success":false}` bez żadnego detalu błędu. Nie jest to blokada Akamai (nie ma 403/503) — sam backend portalu odrzuca żądanie.
+2. **Playwright, POST przez `page.evaluate` (fetch z kontekstu przeglądarki)** — też `status=200, success=false`, mimo prawdziwego kontekstu przeglądarki z ciasteczkami Akamai (`bm_sv`). Czyli fingerprint bota **nie jest** (jedyną) przyczyną.
+3. **Playwright, klik UI fallback** — element `.implicit-confirmation-needed` jest znajdowany (1 dopasowanie), klik wykonywany, ale **nie generuje żadnego requestu sieciowego** (`confirmedRequests: []`) i nie pojawia się przycisk potwierdzenia.
+4. **Root cause kliku:** strona `duty-details` ładowana bezpośrednio (deep-link do fragmentu SPA) **nie ładuje jQuery** (`window.jQuery === undefined`, `pageerror: "$ is not defined"`) — `AllocationDetails.init()` (handler kliku) nigdy się nie wykonuje. To nie jest fragment samodzielny — normalnie jest wstrzykiwany przez router SPA do już zainicjalizowanej powłoki (`mbweb/main/...`), która ładuje jQuery/MDL/`AllocationDetails.js`. Nawigacja Playwrighta prosto na URL fragmentu pomija tę inicjalizację.
+5. Próba naprawy: zalogowanie się przez **prawdziwy formularz** `https://portal.intercity.pl/pad/login` (IVU.pad Login) zamiast REST endpointu — logowanie się powiodło, ale przekierowuje na `https://portal.intercity.pl/pad/init-data/1` (endpoint zwracający JSON, nie HTML powłoki SPA) i tam się zawiesza. Sugeruje to, że `/pad/*` to protokół dla natywnej/tabletowej aplikacji **IVU.pad** (branding „IVU.pad Login”, komunikaty „będzie wysłane jak wrócisz online” typowe dla urządzenia z przerywanym łączem w pociągu), a nie dla przeglądarki desktopowej — `mbweb/main/matter/desktop/*` może wymagać **całkiem innej** sesji/logowania (SSO?, inny cookie), którego nie odkryto.
+
+**Wniosek:** to nie jest prosty bug do naprawienia (np. brakujący header) — prawdopodobnie próbujemy zautomatyzować akcję przez niewłaściwy kanał (webshell desktopowy) podczas gdy realne potwierdzanie kart może być zaprojektowane pod dedykowaną aplikację IVU.pad (tablet/mobile), do której nie mamy wglądu.
+
+**Zalecany następny krok (wymaga człowieka, nie da się zdalnie):** przy najbliższym **realnym, ręcznym** potwierdzeniu karty w prawdziwym kliencie (przeglądarka na komputerze, z otwartym DevTools → zakładka Network, „Preserve log”) zapisać **HAR** całej sesji od zalogowania do kliknięcia „potwierdź”. To pokaże dokładny URL logowania do `mbweb`, nagłówki/ciasteczka sesji i faktyczny request potwierdzenia — bez tego dalsze zdalne zgadywanie ma niską szansę powodzenia.
+
 ---
 
 ### [KB-006] Zmiana Bundle ID po rebrandingu
