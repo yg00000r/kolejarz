@@ -46,17 +46,83 @@
 
 ## Port na Androida (Windows + Pixel 9a)
 
-> **[KOREKTA]** Wcześniejszy plan „`git checkout android` + `git pull`" jest nieaktualny — branch `android` **nigdy nie istniał** w tym repo (zdalnie jest tylko `main`). Roboczym branchem jest `cursor/android-port-0f40`.
+> **[KOREKTA]** Wcześniejszy plan „`git checkout android` + `git pull`" jest nieaktualny — branch `android` **nigdy nie istniał** w tym repo (zdalnie jest tylko `main`). Roboczym branchem jest `cursor/android-port-0f40` — na nim zostaje cała dalsza praca (redesign MD3 włącznie).
 
 - [x] Branch `cursor/android-port-0f40` utworzony i wypchnięty na origin
 - [x] `scripts/pack-local-for-windows.sh` — pakuje `.local-credentials/`, `.env*`, `dev.db` do zipa z hasłem, do transferu Mac → Windows przez LocalSend
 - [x] `app.json` — sekcja `android` już skonfigurowana: `package: com.ygor.kolejarz`, adaptive icon (foreground/background/monochrome — assety obecne w `assets/`), permissions biometrii
 - [ ] Transfer: `git clone`/`git pull` na Windows (kod) + rozpakowanie zipa sekretów (LocalSend)
 - [ ] `npm install` w `mind-app` i `mind-backend` na Windows
-- [ ] Konfiguracja sieciowa (Tailscale) Windows ↔ Mac/VPS
+- [ ] Łączność Windows ↔ backend VPS **przez Tailscale** (nie przez publiczne IP) — do skonfigurowania na Windows/VPS; test bezpośredni na publiczne IP z zewnętrznego środowiska (bez Tailscale) dał `Connection reset`/timeout, ale to nie jest realny sygnał awarii, bo produkcyjna ścieżka dostępu to Tailscale
 - [ ] `npx expo run:android --device` na Pixel 9a
 - [ ] Bugtest OOTB na Androidzie: rejestracja → sync grafiku → wyszukanie pociągu PLK → nowe wpisy w `known-bugs.md` (KB-013+)
 - [ ] Drobny porządek: `app.json → android.permissions` ma zduplikowane wpisy `USE_BIOMETRIC` / `USE_FINGERPRINT` (każdy 2×) — do wyczyszczenia przy najbliższej edycji
+
+---
+
+## Redesign Material Design 3 (Android jako jedyna platforma)
+
+> **Decyzje (2026-08-13):** iOS — koniec developmentu, Android to jedyna aktywna platforma, ewentualne kolejne wersje iOS byłyby portem *z* Androida (nie równoległy tor) → nie trzymamy dwóch systemów designu, jeden MD3 wszędzie. Komponenty: realne `react-native-paper` (już zależność, prawie nieużywana) zamiast custom `TouchableOpacity`/`PressScale`, bez `reanimated`/`lottie` (wydajność na średnim sprzęcie). Dynamic color: `@pchmn/expo-material3-theme` (Material You z tapety na Androidzie 12+, fallback statyczny poniżej). Nawigacja: hybrydowa — wykrywanie trybu systemowego (przyciski vs gesty) + override w Ustawieniach (Auto/Przyciski/Gesty); tryb „Przyciski" → trwały `NavigationBar`, tryb „Gesty" → obecny model (dashboard-kafelki + swipe-back). Top app bar: pełny MD3 „large top app bar" ze scroll-collapse, nie uproszczony. Zakres: pełny redesign wszystkich 27 ekranów jako główny nurt (nie tylko port funkcjonalny + fixy później).
+
+### Faza 0 — Infrastruktura (przed czymkolwiek innym)
+- [ ] Backend VPS: potwierdzić łączność **przez Tailscale** z Windows/Pixela (`GET /health`, `GET /portal/health`) — test z tego cloud-środowiska (bez Tailscale, na publiczne IP) zawiódł, ale nie jest wiarygodny sygnał, bo docelowa ścieżka to Tailscale, nie publiczne IP
+- [ ] Portal IVU: `https://portal.intercity.pl/` z IP VPS — zwraca 403 (Akamai blokuje IP centrów danych), to znany, odroczony problem — **KB-002**, nie nowa awaria
+- [ ] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md`
+
+### Faza 1 — Fundament: zależności i konfiguracja natywna
+- [ ] Dodać `@pchmn/expo-material3-theme` + `@material/material-color-utilities` do `mind-app/package.json`
+- [ ] `app.json`: network security config / `usesCleartextTraffic` dla HTTP do VPS (odpowiednik ATS-exception, którą ma iOS) — bez tego Android 9+ blokuje sync grafiku
+- [ ] `app.json`: dodać `expo-notifications` do `plugins` (obecnie brak — Android 13+ `POST_NOTIFICATIONS` może wymagać explicit config)
+- [ ] `app.json`: wyczyścić zduplikowane `android.permissions`
+- [ ] `eas.json`: dodać sekcję `android` (obecnie tylko iOS)
+- [ ] Oznaczyć jako legacy (bez usuwania na tym etapie): `services/appUpdate.ts` (AltStore/IPA flow), `mind-backend/src/altstoreSource.ts` — nieaktywne dla Androida
+
+### Faza 2 — System tokenów MD3 (kolor, typografia, kształt)
+- [ ] Zastąpić `Colors.dark`/`Colors.light` w `constants/theme.ts` (obecne kolory systemowe iOS) prawdziwymi tonalnymi paletami MD3 generowanymi z seed color — 6 obecnych presetów akcentu jako seed + 7. opcja „Automatyczny (Material You)" jako domyślna na Androidzie 12+
+- [ ] Scalić dwa równoległe API kolorów (`useColors()` vs `useTheme().colors`) w jedno źródło prawdy z pełnym zestawem ról MD3 (`primary`, `onPrimary`, `primaryContainer`, `surfaceVariant`, `outline`...)
+- [ ] Wpisać `useMaterial3Theme()` w `app/_layout.tsx` — `PaperProvider` dostaje motyw dynamiczny (Android 12+) albo statyczny z seed (fallback)
+- [ ] `constants/layout.ts`: zamienić `radius`/`iosContinuousCurve`/touch target 44pt na skalę MD3 (shape 4/8/12/16/28dp, touch target 48dp, elewacja poziomów 0–5 zamiast płaskich kart)
+- [ ] Zdefiniować typografię MD3 (display/headline/title/body/label) w miejsce ad-hoc rozmiarów
+- [ ] Usunąć `Platform.OS === 'ios'` developerki wizualne (`iosContinuousCurve` w ~6 plikach) — jeden design
+
+### Faza 3 — Biblioteka komponentów bazowych
+- [ ] `components/Screen.tsx` + `components/ScreenHeader.tsx` → MD3 large top app bar ze scroll-collapse (na `Animated.ScrollView` + interpolacja, bez reanimated)
+- [ ] `PressScale`/`TouchableOpacity` + `activeOpacity` → komponenty Paper (`Button`, `Card`, `List.Item`, `IconButton`) z natywnym ripple
+- [ ] Nowy `components/NavigationBar.tsx` (MD3 dolna nawigacja: Praca / Monitorowanie / Ustawienia), renderowany warunkowo w trybie „Przyciski"
+- [ ] Nowy `hooks/useNavigationMode.ts` — heurystyka gestów vs przycisków (`useSafeAreaInsets().bottom`) + override z Ustawień, zapis AsyncStorage
+- [ ] Uporządkować nieużywane komponenty: `ErrorBoundary.tsx` (nigdzie zaimportowany), `HapticButton.tsx` (nigdzie zaimportowany), zunifikować `Skeleton.tsx`/`SkeletonLoader.tsx`
+- [ ] `services/haptics.ts` — niezaimportowany mimo ~200 ręcznych wywołań `expo-haptics` — przejść na ten helper przy przepisywaniu ekranów
+
+### Faza 4 — Adaptacyjna nawigacja
+- [ ] Ustawienia: nowa sekcja „Styl nawigacji" — Auto / Przyciski / Gesty
+- [ ] Tryb „Przyciski": trwały `NavigationBar` + pod-toggle „Włącz gesty"
+- [ ] Tryb „Gesty": bez trwałego bottom bara, model jak dotychczas (dashboard-kafelki, swipe-back), przemalowany na MD3
+- [ ] Do zweryfikowania na Pixelu — heurystyka insets nie jest 100% pewna na wszystkich OEM-ach, override w Ustawieniach to siatka bezpieczeństwa, nie opcja
+
+### Faza 5 — Redesign ekranów (27 plików), w kolejności
+1. Fundament: `app/_layout.tsx`, `app/(app)/_layout.tsx`, `app/(auth)/_layout.tsx`
+2. Auth: `app/(auth)/login.tsx` (PIN pad + biometria), `app/(auth)/register.tsx`
+3. Dashboard: `app/(app)/index.tsx`
+4. Ustawienia (już częściowo Paper): `settings/index.tsx`, `settings/diagnostics.tsx`
+5. Praca — hub: `work/index.tsx`
+6. Praca — pozostałe 11 ekranów (`schedule`, `accounts`, `timecard`, `trains`, `station`, `abc`, `dodatki`, `routes`, `duty-details`, `portal-messages`, `crew`)
+7. Komunikaty (`work/messages/` — 8 ekranów)
+8. Monitorowanie: `monitoring/index.tsx`
+
+### Faza 6 — Poprawki Android-specific (niezależne od wizualnego redesignu)
+- [ ] Copy biometrii: „Face ID" → generyczne („Biometria"/„Odcisk palca"), ikona `face-recognition` → `fingerprint` na Androidzie (`AuthContext.tsx`, `biometricAuth.ts`, `login.tsx`, `settings/index.tsx`)
+- [ ] Kanały powiadomień: dodać `channelId` w `services/stationNotifications.ts` i `scheduleTimecardReminder` w `services/work.ts` (dziś tylko `services/notifications.ts` to robi) + ujednolicić branding tytułu („Asystent" vs „Karta pracy")
+- [ ] `services/appUpdate.ts`: `checkForUpdatesOnLaunch()` obecnie wyłączone na Androidzie — zdecydować o strategii OTA/EAS Update
+
+### Faza 7 — Test na urządzeniu (Windows + Pixel 9a)
+- [ ] `npx expo run:android --device` po transferze na Windows
+- [ ] Manualnie: dynamic color (zmiana tapety), heurystyka nav mode, biometria (odcisk palca), kanały powiadomień (w tym `TIME_INTERVAL` w `stationNotifications.ts` — ograniczona niezawodność na Androidzie), cleartext HTTP przez Tailscale
+- [ ] Nowe wpisy `known-bugs.md` (KB-013+)
+
+### Ryzyka MD3/Android
+- `@pchmn/expo-material3-theme` wymaga native build — nie działa w Expo Go, tylko `expo run:android`
+- Heurystyka wykrywania trybu nawigacji nie jest oficjalnym API — różni się między producentami, override w Ustawieniach obowiązkowy
+- Skala: 27 ekranów, ~1665 linii custom stylów — pełny redesign (nie tylko port funkcjonalny) to duży, wieloetapowy nakład pracy
 
 ---
 
