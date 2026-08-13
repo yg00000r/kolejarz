@@ -13,6 +13,10 @@ interface Props {
   disabled?: boolean;
   hitSlop?: number;
   children?: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: 'button' | 'link' | 'none';
+  testID?: string;
 }
 
 /**
@@ -31,6 +35,10 @@ export function PressScale({
   hitSlop,
   style,
   children,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
+  testID,
 }: Props) {
   const anim = useRef(new Animated.Value(1)).current;
 
@@ -57,6 +65,10 @@ export function PressScale({
       onLongPress={onLongPress}
       disabled={disabled}
       hitSlop={hitSlop}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole={accessibilityRole}
+      testID={testID}
     >
       <Animated.View style={[style, { transform: [{ scale: anim }] }]}>
         {children}
