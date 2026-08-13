@@ -6,6 +6,7 @@ import express from 'express';
 import { exec } from 'child_process';
 import fs from 'fs/promises';
 import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import path from 'path';
 import { promisify } from 'util';
 import { PrismaClient } from './generated/prisma/client';
@@ -134,6 +135,27 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+
+// ── Rate limiting ──────────────────────────────────────
+// /auth/* — chroni przed brute-force logowania/rejestracji.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Za dużo żądań do /auth. Spróbuj ponownie za kilka minut.' },
+});
+app.use('/auth', authLimiter);
+
+// /shifts/sync — kosztowna operacja (login do portalu IVU + scraping), ograniczamy nadużycia.
+const syncLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Za dużo synchronizacji. Spróbuj ponownie za kilka minut.' },
+});
+app.use('/shifts/sync', syncLimiter);
 
 registerAppReleaseRoutes(app, RELEASES_DIR, APP_PUBLIC_URL);
 registerAltStoreSourceRoutes(app, RELEASES_DIR, APP_PUBLIC_URL);

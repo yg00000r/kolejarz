@@ -176,7 +176,7 @@
 ## Backlog
 
 ### Priorytet wysoki
-- [ ] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`) — pakiet nadal **nie jest zainstalowany**
+- [x] Rate limiting na `/auth/*` i `/shifts/sync` (`express-rate-limit`) — **zrobione 2026-08-13**: `authLimiter` (20 req / 15 min) na `/auth/*`, `syncLimiter` (10 req / 5 min) na `/shifts/sync`, zweryfikowane lokalnie (429 + `RateLimit-*`/`Retry-After` po przekroczeniu limitu)
 - [ ] Naprawić błąd `tsc` w `app/(app)/index.tsx` (`PressScale` + `accessibilityLabel` — prop nieobecny w typie `Props` komponentu)
 - [ ] Zdecydować co dalej z KB-005 (Playwright `confirm-timecard` niestabilny na VPS) — debug flow albo reverse proxy z sieci firmowej (patrz KB-002)
 
