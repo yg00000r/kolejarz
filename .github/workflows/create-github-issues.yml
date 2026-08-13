@@ -1,0 +1,34 @@
+name: Utwórz GitHub Issues z planu Android/MD3
+
+# Ręczny trigger (workflow_dispatch) — można odpalić z telefonu (Safari/GitHub app),
+# bez terminala: zakładka "Actions" w repo -> ten workflow -> "Run workflow".
+# Używa wbudowanego GITHUB_TOKEN (uprawnienia z sekcji `permissions` poniżej),
+# więc NIE zależy od uprawnień integracji Cursor ani od tego, na czym stoi telefon.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Wpisz "tak", aby faktycznie utworzyć etykiety i 51 issues (nieidempotentne — ponowne odpalenie utworzy duplikaty)'
+        required: true
+        default: 'nie'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sprawdź potwierdzenie
+        if: ${{ github.event.inputs.confirm != 'tak' }}
+        run: |
+          echo "Nie potwierdzono (wpisano '${{ github.event.inputs.confirm }}', wymagane 'tak'). Przerywam bez zmian." >&2
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: Uruchom scripts/create-github-issues.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/create-github-issues.sh
