@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { iosContinuousCurve, radius, touchTargetMin } from '../constants/layout';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { radius, touchTargetMin } from '../constants/layout';
 import { useAppLayout } from '../hooks/useAppLayout';
 
 type ScreenHeaderProps = {
@@ -84,7 +84,6 @@ export function ScreenHeaderIconButton({
       onPress={onPress}
       style={[
         styles.iconBtn,
-        Platform.OS === 'ios' && iosContinuousCurve,
         { borderRadius: radius.lg, backgroundColor },
       ]}
       hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}

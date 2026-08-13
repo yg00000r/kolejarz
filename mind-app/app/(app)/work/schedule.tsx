@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors, Palette } from '../../../contexts/ThemeContext';
 import { type Shift, type ShiftTyp, fetchShifts, scheduleTimecardReminder } from '../../../services/work';
 import { getNotifPrefs } from '../../../services/notifications';

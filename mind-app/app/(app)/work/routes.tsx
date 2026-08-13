@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ScreenHeader } from '../../../components/ScreenHeader';
 import { Screen } from '../../../components/Screen';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import {
   createRouteControl,

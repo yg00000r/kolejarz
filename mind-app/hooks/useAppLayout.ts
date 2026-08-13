@@ -7,6 +7,7 @@ import {
   maxContentWidth,
   pickSpacing,
   TABLET_MIN_WIDTH,
+  touchTargetMin,
   typography,
 } from '../constants/layout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -46,7 +47,7 @@ export function useAppLayout() {
       headerPaddingTop: s.sm,
       headerPaddingBottom: s.md,
       contentMaxWidth,
-      touchTargetMin: 44,
+      touchTargetMin,
       titleSize: (isBig ? typography.titleLarge : typography.title) * textScaleFactor,
       sectionLabelSize: (isBig ? typography.sectionLabelLarge : typography.sectionLabel) * textScaleFactor,
       headerIconSize: isBig ? typography.headerIconSizeLarge : typography.headerIconSize,

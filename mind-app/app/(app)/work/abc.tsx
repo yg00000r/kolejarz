@@ -23,7 +23,6 @@ import {
   type Offer,
   type UlgaUstawowa,
 } from '../../../constants/abc';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';
 

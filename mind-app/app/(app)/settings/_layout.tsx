@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
-import { Colors } from '../../../constants/theme';
 
 export default function SettingsLayout() {
   const { isDark } = useTheme();

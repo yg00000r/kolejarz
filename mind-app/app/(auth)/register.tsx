@@ -4,7 +4,6 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -12,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Screen } from '../../components/Screen';
-import { iosContinuousCurve, radius } from '../../constants/layout';
+import { radius } from '../../constants/layout';
 import { useAuth } from '../../contexts/AuthContext';
 import { BASE_URL } from '../../constants/api';
 import { SESSION_TOKEN_KEY } from '../../services/api';
@@ -174,7 +173,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     borderWidth: 1,
     borderColor: '#3a3a3c',
-    ...(Platform.OS === 'ios' ? iosContinuousCurve : {}),
   },
   error: {
     color: '#ff453a',
@@ -189,7 +187,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    ...(Platform.OS === 'ios' ? iosContinuousCurve : {}),
   },
   buttonDisabled: {
     opacity: 0.6,

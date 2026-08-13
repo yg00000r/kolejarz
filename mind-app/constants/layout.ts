@@ -1,6 +1,8 @@
 /**
- * Layout tokens — design baseline: iPhone Pro Max (17 Pro Max).
- * Android uses the same tokens; safe-area insets come from useAppLayout().
+ * Layout tokens. Historycznie kalibrowane na iPhone Pro Max — po decyzji
+ * Android-only (2026-08-13) skala kształtu (`radius`) i minimalny touch target
+ * (`touchTargetMin`) to teraz oficjalna skala MD3 (zob. E4). Safe-area insets
+ * pochodzą z useAppLayout().
  */
 
 /** Width threshold for large iPhones (Pro Max line). */
@@ -38,14 +40,26 @@ export const spacingLarge = {
   xl: 32,
 } as const;
 
+/**
+ * MD3 shape scale (corner radius, dp) — https://m3.material.io/styles/shape/overview
+ * `none` (0) i `full` (pill/circle, użyj 999 lub `height / 2`) nie mają tu
+ * osobnego tokenu — liczy się bezpośrednio przy komponencie.
+ */
 export const radius = {
-  sm: 12,
-  md: 16,
-  lg: 20,
-  xl: 24,
+  /** extra-small — chipy, małe przyciski */
+  xs: 4,
+  /** small — pola tekstowe, małe karty */
+  sm: 8,
+  /** medium — karty, dialogi */
+  md: 12,
+  /** large — większe karty, bottom sheets */
+  lg: 16,
+  /** extra-large — duże karty na pełną szerokość, FAB */
+  xl: 28,
 } as const;
 
-export const touchTargetMin = 44;
+/** MD3 minimalny rozmiar celu dotykowego (48×48dp) — https://m3.material.io/foundations/accessible-design/overview */
+export const touchTargetMin = 48;
 
 /** Max readable content width — only constrains tablets / very wide screens. */
 export const maxContentWidth = 760;
@@ -63,9 +77,6 @@ export const grid = {
   tileGap: 12,
   tileGapLarge: 14,
 } as const;
-
-/** iOS continuous corner curve (large rounded display). */
-export const iosContinuousCurve = { borderCurve: 'continuous' as const };
 
 export function pickSpacing(isLargePhone: boolean) {
   return isLargePhone ? spacingLarge : spacing;

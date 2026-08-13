@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type PortalMessage, fetchPortalMessages } from '../../../services/work';
 import { Screen } from '../../../components/Screen';

@@ -27,7 +27,6 @@ import {
   travelTimeMinutes,
   workStops,
 } from '../../../../constants/komunikaty';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import {
   isRunSessionValid,

@@ -2,9 +2,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Screen } from '../../components/Screen';
-import { iosContinuousCurve, touchTargetMin } from '../../constants/layout';
+import { touchTargetMin } from '../../constants/layout';
 import { formatBiometricFailureMessage } from '../../contexts/biometricAuth';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppLayout } from '../../hooks/useAppLayout';
@@ -172,7 +172,6 @@ export default function LoginScreen() {
                 key={i}
                 style={[
                   styles.key,
-                  Platform.OS === 'ios' && iosContinuousCurve,
                   { width: keySize, height: keySize, borderRadius: keyRadius },
                   key === '⌫' && styles.keyBackspace,
                 ]}

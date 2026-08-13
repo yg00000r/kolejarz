@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, DimensionValue, Easing, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { Colors } from '../constants/theme';
 import { useTheme, useColors } from '../contexts/ThemeContext';
 
 interface SkeletonProps {

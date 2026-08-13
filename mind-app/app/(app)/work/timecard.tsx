@@ -6,7 +6,6 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacit
 import { Screen } from '../../../components/Screen';
 import { ScreenHeader, ScreenHeaderIconButton } from '../../../components/ScreenHeader';
 import { radius } from '../../../constants/layout';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type Shift, confirmTimecard, confirmTimecardsBulk, fetchShifts, syncPortalStatus } from '../../../services/work';
 

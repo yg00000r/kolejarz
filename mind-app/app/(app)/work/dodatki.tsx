@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import DODATEK_A_RAW from '../../../constants/dodatek_a.json';
 import DODATEK_B_RAW from '../../../constants/dodatek_b.json';
-import { Colors } from '../../../constants/theme';
 import { trainBadgeStyle } from '../../../constants/trainBadge';
 import { useTheme, useColors, Palette } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';

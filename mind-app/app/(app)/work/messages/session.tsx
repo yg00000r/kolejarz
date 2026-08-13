@@ -15,7 +15,6 @@ import {
   View,
 } from 'react-native';
 import { EMPTY_SESSION, GastroType, TrainSession } from '../../../../constants/komunikaty';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { clearTrainSession, loadTrainSession, saveTrainSession } from '../../../../services/trainSession';
 import { Screen } from '../../../../components/Screen';

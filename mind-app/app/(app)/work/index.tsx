@@ -3,13 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { FadeSlideIn } from '../../../components/FadeSlideIn';
 import { PressScale } from '../../../components/PressScale';
 import { Screen } from '../../../components/Screen';
 import { ScreenHeader, ScreenHeaderIconButton } from '../../../components/ScreenHeader';
-import { iosContinuousCurve, radius } from '../../../constants/layout';
-import { Colors } from '../../../constants/theme';
+import { radius } from '../../../constants/layout';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { useAppLayout } from '../../../hooks/useAppLayout';
 import { type Shift, type ShiftTyp, fetchNextShift, fetchShifts, syncShifts } from '../../../services/work';
@@ -182,7 +181,6 @@ export default function WorkScreen() {
           <PressScale
             style={[
               styles.nextShiftCard,
-              Platform.OS === 'ios' && iosContinuousCurve,
               { backgroundColor: shiftColor + '18', borderColor: shiftColor + '44', borderWidth: 1, borderRadius: cardRadius },
             ]}
             onPress={() => handleSubModule('schedule')}
@@ -212,7 +210,6 @@ export default function WorkScreen() {
           <PressScale
             style={[
               styles.nextShiftCard,
-              Platform.OS === 'ios' && iosContinuousCurve,
               { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: cardRadius },
             ]}
             onPress={() => handleSubModule('schedule')}
@@ -234,7 +231,6 @@ export default function WorkScreen() {
                 <PressScale
                   style={[
                     styles.subTile,
-                    Platform.OS === 'ios' && iosContinuousCurve,
                     { backgroundColor: colors.surface, borderRadius: tileRadius },
                   ]}
                   onPress={() => handleSubModule(mod.id)}
@@ -256,7 +252,6 @@ export default function WorkScreen() {
                 <PressScale
                   style={[
                     styles.listRow,
-                    Platform.OS === 'ios' && iosContinuousCurve,
                     { backgroundColor: colors.surface, borderRadius: tileRadius },
                   ]}
                   onPress={() => handleSubModule(mod.id)}

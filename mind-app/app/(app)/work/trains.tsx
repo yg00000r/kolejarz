@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { FadeSlideIn } from '../../../components/FadeSlideIn';
-import { Colors } from '../../../constants/theme';
 import { trainBadgeLabel, trainBadgeStyle } from '../../../constants/trainBadge';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { Screen } from '../../../components/Screen';

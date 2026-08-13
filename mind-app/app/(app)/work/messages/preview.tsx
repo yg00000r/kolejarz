@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { MessageTypeId } from '../../../../constants/komunikaty';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { addToQueue } from '../../../../services/messageQueue';
 import { Screen } from '../../../../components/Screen';

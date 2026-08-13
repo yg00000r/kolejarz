@@ -16,7 +16,6 @@ import {
 import { BreadRain } from '../../../components/BreadRain';
 import { FadeSlideIn } from '../../../components/FadeSlideIn';
 import { Screen } from '../../../components/Screen';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors, Palette } from '../../../contexts/ThemeContext';
 import { type CrewMember, type CrewOnTrip, fetchCrewOnTrip } from '../../../services/work';
 

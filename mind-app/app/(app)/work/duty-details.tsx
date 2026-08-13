@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../../constants/theme';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
 import { type DutyDetails, fetchDutyDetails } from '../../../services/work';
 import { Screen } from '../../../components/Screen';

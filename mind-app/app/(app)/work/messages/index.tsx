@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { TrainRunSession } from '../../../../constants/komunikaty';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { isRunSessionValid, loadRunSession } from '../../../../services/trainSession';
 import { getQueue, QueuedMessage } from '../../../../services/messageQueue';

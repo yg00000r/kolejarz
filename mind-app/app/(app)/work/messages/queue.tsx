@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { clearQueue, getQueue, removeFromQueue, QueuedMessage } from '../../../../services/messageQueue';
 import { Screen } from '../../../../components/Screen';

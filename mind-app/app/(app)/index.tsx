@@ -1,13 +1,13 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { FadeSlideIn } from '../../components/FadeSlideIn';
 import { PressScale } from '../../components/PressScale';
 import { Screen } from '../../components/Screen';
 import { ScreenHeaderIconButton } from '../../components/ScreenHeader';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
-import { iosContinuousCurve, radius } from '../../constants/layout';
+import { radius } from '../../constants/layout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useColors } from '../../contexts/ThemeContext';
 import { useAppLayout } from '../../hooks/useAppLayout';
@@ -108,7 +108,6 @@ export default function Dashboard() {
             <PressScale
               style={[
                 styles.pracaCard,
-                Platform.OS === 'ios' && iosContinuousCurve,
                 { backgroundColor: colors.surface, borderRadius: tileRadius },
               ]}
               onPress={() => handleModulePress('work')}

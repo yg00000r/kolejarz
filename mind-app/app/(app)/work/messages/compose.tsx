@@ -33,7 +33,6 @@ import {
   generatePStart,
   generatePozegnalny,
 } from '../../../../constants/komunikaty';
-import { Colors } from '../../../../constants/theme';
 import { useTheme, useColors } from '../../../../contexts/ThemeContext';
 import { loadTrainSession } from '../../../../services/trainSession';
 import { Screen } from '../../../../components/Screen';
