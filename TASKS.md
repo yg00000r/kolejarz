@@ -12,8 +12,8 @@
 
 | Co | Stan |
 |---|---|
-| Branch główny | `main` |
-| Branch roboczy Android | `cursor/android-port-0f40` — zawiera **tylko** helper do transferu sekretów (`scripts/pack-local-for-windows.sh`), **bez** faktycznego portu na Androida |
+| Branch główny | `main` — od 2026-08-13 zawiera już cały plan portu na Androida/MD3 (branch `cursor/android-port-0f40` zmergowany fast-forward, PR #1) |
+| Łączność z backendem | ✅ Zweryfikowana przez Tailscale (agent chmurowy dołączony do tailnetu) — `GET /health` i `GET /portal/health` na `100.66.57.89:3000` odpowiadają 200. Węzeł `vps-edge` jest offline — **pomijamy go na czas developmentu**, praca idzie przez SSH bezpośrednio na `server` (`ygor@100.66.57.89`, Tailscale SSH, bez kluczy) |
 | Backend `tsc --noEmit` | ✅ OK (wymaga wcześniejszego `npx prisma generate` — bez tego 2 błędy „Cannot find module './generated/prisma/client'") |
 | Frontend `tsc --noEmit` | ❌ 1 błąd — `app/(app)/index.tsx:129`, `PressScale` nie przyjmuje propa `accessibilityLabel` w swoim typie `Props` |
 | `react-native-reanimated` / `lottie-react-native` | **Nie są zainstalowane** (brak w `package.json` i w całej historii gita) — patrz sekcja UI/UX poniżej |
@@ -67,9 +67,9 @@
 > **Decyzje (2026-08-13):** iOS — koniec developmentu, Android to jedyna aktywna platforma, ewentualne kolejne wersje iOS byłyby portem *z* Androida (nie równoległy tor) → nie trzymamy dwóch systemów designu, jeden MD3 wszędzie. Komponenty: realne `react-native-paper` (już zależność, prawie nieużywana) zamiast custom `TouchableOpacity`/`PressScale`, bez `reanimated`/`lottie` (wydajność na średnim sprzęcie). Dynamic color: `@pchmn/expo-material3-theme` (Material You z tapety na Androidzie 12+, fallback statyczny poniżej). Nawigacja: hybrydowa — wykrywanie trybu systemowego (przyciski vs gesty) + override w Ustawieniach (Auto/Przyciski/Gesty); tryb „Przyciski" → trwały `NavigationBar`, tryb „Gesty" → obecny model (dashboard-kafelki + swipe-back). Top app bar: pełny MD3 „large top app bar" ze scroll-collapse, nie uproszczony. Zakres: pełny redesign wszystkich 27 ekranów jako główny nurt (nie tylko port funkcjonalny + fixy później).
 
 ### Faza 0 — Infrastruktura (przed czymkolwiek innym)
-- [ ] Backend VPS: potwierdzić łączność **przez Tailscale** z Windows/Pixela (`GET /health`, `GET /portal/health`) — test z tego cloud-środowiska (bez Tailscale, na publiczne IP) zawiódł, ale nie jest wiarygodny sygnał, bo docelowa ścieżka to Tailscale, nie publiczne IP
+- [x] Backend VPS: potwierdzić łączność **przez Tailscale** (`GET /health`, `GET /portal/health`) — **zweryfikowane 2026-08-13**: agent chmurowy dołączony do tailnetu (`tailscale up`), oba endpointy odpowiadają 200 (`/portal/health` zwraca nawet `loggedIn: true` ze świeżym `lastSyncAt`). Węzeł `server` (100.66.57.89) online, dostępny też po SSH bez kluczy (Tailscale SSH). Węzeł `vps-edge` offline — pomijamy, pracujemy bezpośrednio na `server`
 - [ ] Portal IVU: `https://portal.intercity.pl/` z IP VPS — zwraca 403 (Akamai blokuje IP centrów danych), to znany, odroczony problem — **KB-002**, nie nowa awaria
-- [ ] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md`
+- [x] Jeśli po weryfikacji przez Tailscale coś nadal nie działa — nowy wpis w `known-bugs.md` — **nie potrzebne, wszystko działa poprawnie**
 
 ### Faza 1 — Fundament: zależności i konfiguracja natywna
 - [ ] Dodać `@pchmn/expo-material3-theme` + `@material/material-color-utilities` do `mind-app/package.json`
@@ -169,7 +169,7 @@
 - [x] `portalSessionForTenant(tenantId)` — login do portalu IVU danymi z `Tenant` w DB (hasło odszyfrowane AES-256-GCM), **nie** globalnym env
 - [x] Cron auto-sync (`0 */6 * * *`) iteruje po **wszystkich** tenantach w bazie (`runScheduledSync` → `prisma.tenant.findMany()`) — `known-bugs.md` KB-008 ma nieaktualny tytuł „jeden tenant", opis w środku jest już poprawny
 - [x] `POST /portal/confirm-timecard` — kod zaimplementowany (HTTP + fallback Playwright), **ale** działanie na produkcji jest niestabilne → patrz `known-bugs.md` KB-005 (nie jest to już „TODO do napisania", to „napisane, ale wymaga debugowania na VPS")
-- [ ] `npx prisma migrate deploy` na VPS po dodaniu `Tenant`/`AppSession` — nie do zweryfikowania zdalnie z tego środowiska, do potwierdzenia przez maintainera na VPS (patrz `known-bugs.md` KB-007)
+- [x] `npx prisma migrate deploy` na VPS po dodaniu `Tenant`/`AppSession` — **zweryfikowane 2026-08-13** przez SSH na `server`: kontener `kolejarz` ma obie tabele z realnymi danymi (`Tenant.count() = 2`, `AppSession.count() = 8`), migracja przeszła poprawnie (patrz `known-bugs.md` KB-007)
 
 ---
 

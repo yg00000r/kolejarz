@@ -145,6 +145,8 @@ ssh mind-kolejarz-vps "docker exec kolejarz npx prisma migrate deploy"
 ```
 Brak migracji = aplikacja może crashować przy dostępie do nowych kolumn/tabel.
 
+**Zweryfikowano (2026-08-13):** przez SSH (Tailscale) na `server` (100.66.57.89), kontener `kolejarz` — `Tenant`/`AppSession` istnieją i mają dane (2 tenantów, 8 sesji), migracja po dodaniu tych modeli przeszła poprawnie na produkcji.
+
 ### [KB-008] Cron auto-sync — jeden tenant
 
 Automatyczny sync co 6h (cron) aktualnie iteruje po wszystkich tenantach w bazie. Jeśli tenant ma nieważne credentials (zmiana hasła w portalu), sync dla niego failuje w logu ale nie blokuje pozostałych tenantów. Wymagana ręczna re-rejestracja przez aplikację.
