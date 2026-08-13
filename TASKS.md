@@ -3,6 +3,8 @@
 > Format: `- [x]` zrobione · `- [ ]` do zrobienia · `- [~]` w trakcie / częściowo
 >
 > **Zweryfikowano automatycznie:** 2026-08-13 (cloud agent) — `npx tsc --noEmit` w obu projektach, `npx prisma generate`, przegląd kodu backendu/frontend względem tego, co ten plik wcześniej deklarował jako zrobione. Punkty oznaczone **[KOREKTA]** zostały poprawione, bo nie zgadzały się ze stanem repo.
+>
+> **Migracja do GitHub Issues (2026-08-13):** cały backlog z tego pliku został rozpisany z kodowaniem etap/zadanie (A1, A2, B1...) w [docs/GITHUB_ISSUES_PLAN.md](docs/GITHUB_ISSUES_PLAN.md), z priorytetami i dopiskiem `(MC)` dla zadań wykonywalnych w całości przez agenta chmurowego. Do faktycznego utworzenia issues służy `scripts/create-github-issues.sh` — agent chmurowy nie ma uprawnienia do zapisu w GitHub Issues tego repo (`403 Resource not accessible by integration`), więc skrypt trzeba odpalić lokalnie z uprawnionym `gh`. Ten plik zostaje źródłem prawdy do czasu wykonania migracji.
 
 ---
 
