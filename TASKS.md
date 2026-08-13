@@ -187,7 +187,7 @@
 - [ ] Lepsze błędy sync w UI: parsować body 502, pokazać przyczynę (portal/sieć)
 
 ### Priorytet niski
-- [ ] `altstoreSource.ts` — **uwaga:** aktywnie zarejestrowany w `index.ts` (`registerAltStoreSourceRoutes`), to nie jest dead code; ocenić realną potrzebę przed usunięciem/uproszczeniem
+- [x] **C3** — `altstoreSource.ts` oceniony (2026-08-13): aktywnie zarejestrowany w `index.ts`, ale **funkcjonalnie bezczynny** (brak `.ipa` w `app-releases/` na VPS → `GET /altstore/source.json` zwraca 404). Zdecydowano: **nie usuwać teraz** — oznaczony komentarzem `LEGACY` w kodzie jako zamrożony po decyzji Android-only, nieszkodliwy w bezczynności. Do ponownej oceny, jeśli iOS zostanie ostatecznie zamknięty (nie tylko zamrożony)
 - [ ] HTTPS na VPS (Caddy) — fix dla KB-001
 - [ ] CI: GitHub Actions — `tsc --noEmit` + `prisma validate` (folder `.github/workflows` obecnie nie istnieje)
 - [ ] `tsc --noEmit` bez błędów w obu projektach — backend: ✅ (po `prisma generate`); frontend: ❌ 1 błąd, patrz wyżej

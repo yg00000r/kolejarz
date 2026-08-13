@@ -3,6 +3,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import type { ReleaseManifest } from './appRelease';
 
+/**
+ * LEGACY (2026-08-13): iOS sideloading via AltStore/AltServer, zamrożone po decyzji
+ * o przejściu wyłącznie na Androida (zob. TASKS.md → Redesign MD3). Nie usunięto —
+ * kod jest aktywnie zarejestrowany (`registerAltStoreSourceRoutes` w `index.ts`) i
+ * nieszkodliwy w stanie bezczynności: bez pliku .ipa w `app-releases/`
+ * `GET /altstore/source.json` zwraca po prostu 404 (patrz `buildAltStoreSource`).
+ * Do ponownej oceny (usunięcie / uproszczenie), jeśli iOS zostanie ostatecznie
+ * zamknięty, a nie tylko zamrożony.
+ */
+
 /** Minimalny format AltStore Source — https://faq.altstore.io/developers/make-a-source */
 export type AltStoreSource = {
   name: string;
