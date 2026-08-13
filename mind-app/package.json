@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "update:ota": "eas update --branch production --message",
     "update:native": "bash scripts/publish-native.sh",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

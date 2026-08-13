@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend — tsc + prisma validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mind-backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mind-backend/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: prisma validate
+        run: npx prisma validate
+
+      - name: typecheck (prisma generate + tsc --noEmit)
+        run: npm run typecheck
+
+  app:
+    name: App — tsc --noEmit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mind-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mind-app/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
