@@ -1,19 +1,20 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { AppTheme, Colors } from '../constants/theme';
-import { TextScale, ThemeMode, useAppTheme } from '../hooks/useAppTheme';
+import React, { createContext, useContext } from 'react';
+import { AppTheme, Palette } from '../constants/theme';
+import { AccentChoice, TextScale, ThemeMode, useAppTheme } from '../hooks/useAppTheme';
 
-/** Runtime palette (StyleSheet colors) with the user's accent applied. */
-export type Palette = { [K in keyof typeof Colors.light]: string };
+// Re-eksport dla istniejących ekranów, które importują `Palette` z tego modułu
+// (nie z `constants/theme.ts`) — `import { type Palette } from '.../ThemeContext'`.
+export type { AppTheme, Palette };
 
 interface ThemeContextType {
   theme: AppTheme;
   mode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   isDark: boolean;
-  colors: AppTheme['colors'];
+  colors: Palette;
   accent: string;
-  accentCustom: string | null;
-  setAccent: (color: string | null) => Promise<void>;
+  accentCustom: AccentChoice;
+  setAccent: (choice: AccentChoice) => Promise<void>;
   textScale: TextScale;
   textScaleFactor: number;
   setTextScale: (scale: TextScale) => Promise<void>;
@@ -33,14 +34,12 @@ export function useTheme(): ThemeContextType {
 }
 
 /**
- * Returns the runtime palette (the same shape as `Colors.dark`/`Colors.light`)
- * with the user-selected accent applied. Drop-in replacement for
- * `isDark ? Colors.dark : Colors.light`.
+ * E2: `useColors()` i `useTheme().colors` to teraz jedno źródło prawdy —
+ * pełny zestaw ról MD3 (`Material3Scheme`, generowany z seed color / dynamic
+ * color — zob. E1/E3 w `hooks/useAppTheme.ts`) + aliasy zgodności (`text`,
+ * `textSecondary`, `accent`, `border`, `surfaceSecondary`) używane w ~30
+ * istniejących ekranach. Zostaje jako krótszy skrót do `useTheme().colors`.
  */
 export function useColors(): Palette {
-  const { isDark, accent } = useTheme();
-  return useMemo(
-    () => ({ ...(isDark ? Colors.dark : Colors.light), accent }),
-    [isDark, accent],
-  );
+  return useTheme().colors;
 }

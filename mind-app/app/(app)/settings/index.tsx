@@ -13,8 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { isDynamicThemeSupported } from '@pchmn/expo-material3-theme';
 import { Switch } from 'react-native-paper';
-import { Colors } from '../../../constants/theme';
 import { BASE_URL } from '../../../constants/api';
 import { APP_VERSION } from '../../../constants/version';
 import {
@@ -25,7 +25,7 @@ import {
 import * as Updates from 'expo-updates';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme, useColors } from '../../../contexts/ThemeContext';
-import { ACCENT_PRESETS, ThemeMode, type TextScale } from '../../../hooks/useAppTheme';
+import { ACCENT_AUTO, ACCENT_PRESETS, ThemeMode, type TextScale } from '../../../hooks/useAppTheme';
 import { useNotificationSetup } from '../../../hooks/useNotificationSetup';
 import { Screen } from '../../../components/Screen';
 
@@ -348,24 +348,50 @@ export default function SettingsScreen() {
             })}
           </View>
 
-          <View style={[styles.row, styles.rowBorder, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
-            <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.rowLabel, { color: colors.text }]}>Kolor akcentu</Text>
+          <View style={[styles.rowBorder, styles.accentSection, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
+            <View style={styles.accentHeaderRow}>
+              <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Kolor akcentu</Text>
+            </View>
             <View style={styles.accentRow}>
+              <TouchableOpacity
+                key={ACCENT_AUTO}
+                onPress={() => { Haptics.selectionAsync(); void setAccent(ACCENT_AUTO); }}
+                style={[
+                  styles.accentSwatch,
+                  styles.accentSwatchAuto,
+                  { backgroundColor: colors.surfaceVariant, borderColor: colors.outline },
+                  accentCustom === ACCENT_AUTO && { borderColor: colors.text, borderWidth: 2.5 },
+                ]}
+                activeOpacity={0.7}
+                accessibilityLabel="Automatyczny (Material You)"
+              >
+                <MaterialCommunityIcons
+                  name={accentCustom === ACCENT_AUTO ? 'check' : 'auto-fix'}
+                  size={14}
+                  color={colors.onSurfaceVariant}
+                />
+              </TouchableOpacity>
               {ACCENT_PRESETS.map((c) => {
-                const active = (accentCustom ?? ACCENT_PRESETS[0]) === c;
+                const active = accentCustom === c;
                 return (
                   <TouchableOpacity
                     key={c}
-                    onPress={() => { Haptics.selectionAsync(); void setAccent(c === ACCENT_PRESETS[0] ? null : c); }}
+                    onPress={() => { Haptics.selectionAsync(); void setAccent(c); }}
                     style={[styles.accentSwatch, { backgroundColor: c }, active && { borderColor: colors.text, borderWidth: 2.5 }]}
                     activeOpacity={0.7}
+                    accessibilityLabel={`Akcent ${c}`}
                   >
                     {active && <MaterialCommunityIcons name="check" size={14} color="#fff" />}
                   </TouchableOpacity>
                 );
               })}
             </View>
+            {isDynamicThemeSupported ? null : (
+              <Text style={[styles.accentHint, { color: colors.textSecondary }]}>
+                „Automatyczny” (Material You z tapety) wymaga Androida 12+ — na tym urządzeniu użyty zostanie domyślny niebieski.
+              </Text>
+            )}
           </View>
 
           <View style={styles.row}>
@@ -582,8 +608,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
+  accentSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  accentHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   accentRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     alignItems: 'center',
   },
@@ -594,6 +631,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: 'transparent',
+  },
+  accentSwatchAuto: {
+    borderWidth: 1,
+  },
+  accentHint: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   minutesChip: {
     paddingHorizontal: 10,
