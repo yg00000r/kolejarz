@@ -10,11 +10,24 @@
         "simulator": false,
         "buildConfiguration": "Release"
       },
+      "android": {
+        "buildType": "apk"
+      },
       "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
     },
     "production": {
       "ios": {
         "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "app-bundle"
       },
       "channel": "production"
     }
