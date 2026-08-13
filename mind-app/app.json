@@ -77,6 +77,13 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#007AFF"
         }
+      ],
+      [
+        "expo-network-security-config",
+        {
+          "networkSecurityConfig": "./network-security-config.xml",
+          "enable": true
+        }
       ]
     ],
     "extra": {

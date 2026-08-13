@@ -26,6 +26,7 @@
     "expo-local-authentication": "~17.0.8",
     "expo-modules-autolinking": "~3.0.22",
     "expo-modules-core": "~3.0.30",
+    "expo-network-security-config": "^1.1.2",
     "expo-notifications": "~0.32.16",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",

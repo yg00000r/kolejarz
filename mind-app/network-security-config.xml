@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  D2 (Android/MD3 port): domyślnie Android 9+ (API 28+) blokuje cleartext HTTP.
+  Backend produkcyjny (`BASE_URL` w constants/api.ts) na razie działa po HTTP
+  (patrz known-bugs.md KB-001, KB-014 — HTTPS przygotowane, czeka na DNS+sudo).
+  Analogiczny wyjątek istnieje po stronie iOS w app.json -> ios.infoPlist.NSAppTransportSecurity.
+
+  Do usunięcia (cały plik + wpis w app.json plugins), gdy KB-014 zostanie
+  domknięte i BASE_URL przejdzie na https://kolejarz.yg00r.com.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">57.128.246.232</domain>
+    </domain-config>
+
+    <!--
+      Tylko dla buildów z android:debuggable="true" (Expo dev-client, `expo run:android`,
+      lokalny Metro) — pozwala testować z backendem na LAN (np. http://192.168.x.x:3000)
+      bez dodawania każdego IP z osiedlowej sieci na stałe do konfigu produkcyjnego.
+    -->
+    <debug-overrides>
+        <base-config cleartextTrafficPermitted="true" />
+    </debug-overrides>
+</network-security-config>
