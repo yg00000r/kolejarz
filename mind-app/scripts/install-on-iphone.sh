@@ -3,11 +3,23 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DEVICE_ID="${1:-00008150-00090DA43400C01C}"
-DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-C575W8H28R}"
+DEVICE_ID="${1:-}"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
 SCHEME="Kolejarz"
 WORKSPACE="ios/Kolejarz.xcworkspace"
 DERIVED_DATA="ios/build/DerivedData"
+
+if [[ -z "$DEVICE_ID" ]]; then
+  echo "Użycie: $0 <UDID>" >&2
+  echo "UDID: Xcode → Window → Devices and Simulators" >&2
+  echo "Team: export DEVELOPMENT_TEAM=XXXXXXXXXX" >&2
+  exit 1
+fi
+if [[ -z "$DEVELOPMENT_TEAM" ]]; then
+  echo "Ustaw DEVELOPMENT_TEAM (Apple Team ID), np.:" >&2
+  echo "  export DEVELOPMENT_TEAM=XXXXXXXXXX" >&2
+  exit 1
+fi
 
 echo "=== Instalacja Kolejarz na iPhone ==="
 echo "Urządzenie: $DEVICE_ID"

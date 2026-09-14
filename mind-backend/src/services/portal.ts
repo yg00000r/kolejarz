@@ -124,8 +124,17 @@ type PortalSessionState = {
 const sessions = new Map<string, PortalSessionState>();
 const TOKEN_TTL_MS = 20 * 60 * 60 * 1000; // 20h (JWT valid ~24h per "dur":"P1D")
 
+/**
+ * Legacy fallback username for endpoints that still call portal helpers
+ * without an explicit tenant. Prefer per-tenant credentials from the DB.
+ * No personal username is hardcoded — set PORTAL_USER in .env if needed.
+ */
 export function defaultPortalUser(): string {
-  return process.env.PORTAL_USER ?? 'idutkiewicz';
+  const fromEnv = process.env.PORTAL_USER?.trim();
+  if (fromEnv) return fromEnv;
+  throw new Error(
+    'PORTAL_USER is not set. Pass an explicit portal username or set PORTAL_USER in .env (legacy paths only).',
+  );
 }
 
 function getSession(sessionKey: string): PortalSessionState {
@@ -211,7 +220,7 @@ export function getPortalAutoPasswordAttempts(): string[] {
  * On each HTTP call, the portal sets a JSESSIONID cookie — collected via
  * `sessionCookies` and sent on subsequent requests.
  *
- * @param user - Portal username (e.g. "idutkiewicz"). Falls back to PORTAL_USER env var.
+ * @param user - Portal username. Falls back to PORTAL_USER env var (no hardcoded default).
  * @param pass - Portal password. When provided, only that password is tried.
  *               When omitted, falls back to the brute-force password variants
  *               (month+year pattern) — see `portalPasswordVariantsForOffset`.

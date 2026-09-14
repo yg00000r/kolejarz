@@ -2,6 +2,9 @@
 
 > **Cel:** działająca aplikacja na telefonie w mniej niż 10 minut, bez konfigurowania backendu.
 
+**Prywatny Mac + pełne środowisko iOS + odbudowa sekretów** → [docs/LOCAL_IOS_SETUP.md](docs/LOCAL_IOS_SETUP.md) i [docs/SECRETS_AUDIT.md](docs/SECRETS_AUDIT.md).  
+Bootstrap: `bash scripts/setup-local-env.sh`
+
 ---
 
 ## Szybki start — Expo Go (zalecane)
@@ -16,9 +19,9 @@
 ### Kroki
 
 ```bash
-# 1. Sklonuj repo
-git clone <URL_REPO>
-cd Mind/mind-app
+# 1. Sklonuj repo na prywatny komputer
+git clone git@github.com:yg00000r/kolejarz.git
+cd kolejarz/mind-app
 
 # 2. Zainstaluj zależności
 npm install
@@ -115,16 +118,17 @@ mind-app/
 > Wymagane: dostęp SSH do VPS + plik `.local-credentials/AGENT-SSH-VPS.md`
 
 ```bash
-cd Mind/mind-backend
-cp .env.example .env
-# Uzupełnij .env: PLK_API_KEY, ENCRYPTION_KEY, CHROMIUM_PATH
+# Z katalogu głównego repo (albo ręcznie jak niżej)
+bash scripts/setup-local-env.sh
 
-npm install
+cd mind-backend
+# .env już z przykładu + wygenerowanym ENCRYPTION_KEY — uzupełnij PLK_API_KEY
 npx prisma migrate dev
 npm run dev
 ```
 
-Zmień `BASE_URL` w `mind-app/constants/api.ts` na `http://localhost:3000` do lokalnego testowania.
+W `mind-app/.env` ustaw `EXPO_PUBLIC_API_URL=http://<IP_MACA>:3000` (z telefonu nie używaj `localhost`).  
+Szczegóły rotacji sekretów: [docs/SECRETS_AUDIT.md](docs/SECRETS_AUDIT.md).
 
 ### Deploy na VPS
 

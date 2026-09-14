@@ -3,7 +3,7 @@ Deep recon IVU.pad — po zalogowaniu czeka na sync, nawiguje do harmonogramu,
 przechwytuje wszystkie API calls i dumpuje dane z CouchDB.
 
 Użycie:
-  python recon_deep.py --login idutkiewicz --password Marzec2026 --headed
+  python recon_deep.py --login <PORTAL_USER> --password <PORTAL_PASSWORD> --headed
 """
 
 import argparse
@@ -261,10 +261,10 @@ def dump_couch_databases(page: Page, out: Path, token: str):
     print("\n[6] Dumping CouchDB databases ...")
 
     databases = [
-        "ivupad_timetable_assignments_idutkiewicz",
+        "ivupad_timetable_assignments_<PORTAL_USER>",
         "ivupad_duty_nodes",
-        "ivupad_node_statuses_idutkiewicz",
-        "ivupad_export_idutkiewicz",
+        "ivupad_node_statuses_<PORTAL_USER>",
+        "ivupad_export_<PORTAL_USER>",
         "ivupad_nodes",
         "ivupad_users",
         "ivupad_config",
@@ -313,7 +313,7 @@ def dump_couch_databases(page: Page, out: Path, token: str):
     # Try views that might return duty data
     print("\n  📦 Querying duty views ...")
     views_to_try = [
-        f"{COUCH_BASE}/ivupad_timetable_assignments_idutkiewicz/_design/userView/_view/by_departureTimestamp",
+        f"{COUCH_BASE}/ivupad_timetable_assignments_<PORTAL_USER>/_design/userView/_view/by_departureTimestamp",
         f"{COUCH_BASE}/ivupad_duty_nodes/_design/globalView/_view/by_all?include_docs=true",
         f"{COUCH_BASE}/ivupad_nodes/_design/userView/_view/by_id_with_userGroups_and_users?include_docs=true",
     ]

@@ -6,7 +6,7 @@ intercepts network requests to understand confirm-allocation flow,
 and probes actual-duties for allocation IDs.
 
 Usage:
-  python recon_timecard.py --login idutkiewicz --password Marzec2026
+  python recon_timecard.py --login <PORTAL_USER> --password <PORTAL_PASSWORD>
 """
 
 import argparse
