@@ -3,7 +3,7 @@ Feature discovery — skanuje WSZYSTKIE endpointy z sync URL,
 zbiera dane z duty-details, messages, crew, timecards itd.
 
 Użycie:
-  python recon_features.py --login idutkiewicz --password Marzec2026
+  python recon_features.py --login <PORTAL_USER> --password <PORTAL_PASSWORD>
 """
 
 import argparse

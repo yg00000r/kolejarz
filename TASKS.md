@@ -8,6 +8,22 @@
 
 ---
 
+## Przygotowanie lokalne pod iOS (prywatny Mac) — aktywne
+
+Cel: pliki na prywatnym komputerze, zależności, odbudowa sekretów, gotowość pod kolejne fazy iOS.
+
+- [x] Dokumentacja pobrania repo + toolchain Mac/Xcode/Expo — `docs/LOCAL_IOS_SETUP.md`
+- [x] Audyt sekretów w kodzie + procedura rotacji — `docs/SECRETS_AUDIT.md`
+- [x] `scripts/setup-local-env.sh` — bootstrap `.env`, `ENCRYPTION_KEY`, `npm install`
+- [x] `EXPO_PUBLIC_API_URL` faktycznie czytany w `mind-app/constants/api.ts`
+- [x] Usunięty hardcoded fallback loginu IVU z `defaultPortalUser()` (wymaga `PORTAL_USER` lub explicit user)
+- [ ] **Na prywatnym Macu (Ty):** `git clone` / `git pull`, `bash scripts/setup-local-env.sh`
+- [ ] **Na prywatnym Macu:** uzupełnić `PLK_API_KEY` (nowy, jeśli stary mógł wyciec)
+- [ ] **Na VPS (jeśli wyciek `.env`):** nowy `ENCRYPTION_KEY` + re-rejestracja tenantów + rotacja SSH
+- [ ] Smoke: Expo Go lub `npx expo run:ios --device` → rejestracja → sync
+
+---
+
 ## Stan repo w skrócie
 
 | Co | Stan |

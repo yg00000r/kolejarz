@@ -2,7 +2,9 @@
 
 Prywatna aplikacja na iPhone dla pracownika PKP Intercity. Dwa aktywne moduły: **Praca** (grafik, pociągi, komunikaty radiowe, kontrolki szlaków) i **Monitorowanie** (VPS, Docker).
 
-> **Szybki start dla nowego dewelopera** → [setup.md](setup.md)
+> **Szybki start** → [SETUP.md](SETUP.md)  
+> **Mac + iOS (pełne środowisko)** → [docs/LOCAL_IOS_SETUP.md](docs/LOCAL_IOS_SETUP.md)  
+> **Sekrety / `.env`** → [docs/SECRETS_AUDIT.md](docs/SECRETS_AUDIT.md)
 
 Design: natywny iOS feel, haptyczny feedback, spring animations, minimalistyczne UI zgodne z Apple HIG.
 

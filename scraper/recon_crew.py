@@ -18,8 +18,8 @@ Strategia:
 Zapisuje surowy HTML do recon_output/crew_YYYYMMDD_HHMMSS/.
 
 Użycie:
-  python recon_crew.py --login idutkiewicz --password 'haslo' --date 2026-06-20 --trip 6200
-  python recon_crew.py --login idutkiewicz --password 'haslo' --date 2026-06-20 --trip 6200 --headed
+  python recon_crew.py --login <PORTAL_USER> --password '<PORTAL_PASSWORD>' --date 2026-06-20 --trip 6200
+  python recon_crew.py --login <PORTAL_USER> --password '<PORTAL_PASSWORD>' --date 2026-06-20 --trip 6200 --headed
 """
 
 import argparse
